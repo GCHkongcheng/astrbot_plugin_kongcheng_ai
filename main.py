@@ -92,7 +92,7 @@ class KongchengAIVideoPlugin(Star):
         self.max_video_size_mb = max(10, int(self.config.get("max_video_size_mb", 100)))
         self.max_cache_files = max(1, int(self.config.get("max_cache_files", 20)))
         self.video_cache_dir = (
-            get_astrbot_data_path() / "video_cache" / "astrbot_plugin_kongcheng_ai"
+            Path(get_astrbot_data_path()) / "video_cache" / "astrbot_plugin_kongcheng_ai"
         )
 
     @staticmethod
