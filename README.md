@@ -13,6 +13,7 @@ AstrBot 视频生成插件（智谱 AI）。
 请在 AstrBot 插件配置页填写（由 `_conf_schema.json` 提供）：
 
 - `api_key`：智谱 AI API Key（必填）
+- `api_base`：智谱 OpenAPI 地址（默认 `https://open.bigmodel.cn/api/paas/v4`）
 - `model`：视频模型名称（默认 `CogVideoX-Flash`）
 - `save_video_local`：是否缓存视频到本地
 - `max_cache_files`：缓存文件上限，超过会自动清理最旧文件
@@ -44,7 +45,7 @@ AstrBot 视频生成插件（智谱 AI）。
 ## 本地调试步骤
 
 1. 确认插件目录在：`AstrBot/data/plugins/astrbot_plugin_kongcheng_ai`
-2. 安装插件依赖（AstrBot 启动后通常会自动处理，也可手动安装 `requirements.txt`）
+2. 本插件无额外第三方依赖，不会触发核心依赖降级
 3. 启动 AstrBot 主程序
 4. 在 WebUI 的插件管理页启用本插件并填写 `api_key`
 5. 修改代码后，在 WebUI 使用 `Reload Plugin` 热重载验证
@@ -52,5 +53,6 @@ AstrBot 视频生成插件（智谱 AI）。
 ## 说明
 
 - 插件调用外部接口使用异步友好方式，避免阻塞 AstrBot 事件循环。
+- 插件通过 `aiohttp` 直连智谱 OpenAPI，不依赖 `zhipuai` SDK。
 - 图生视频图片只在内存中处理，不写入临时图片文件。
 - 对用户返回的错误信息做了脱敏处理，避免泄漏敏感信息。

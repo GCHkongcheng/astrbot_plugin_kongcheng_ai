@@ -6,6 +6,12 @@
     "default": "",
     "obvious_hint": true
   },
+  "api_base": {
+    "description": "智谱 OpenAPI Base URL",
+    "type": "string",
+    "hint": "默认 https://open.bigmodel.cn/api/paas/v4",
+    "default": "https://open.bigmodel.cn/api/paas/v4"
+  },
   "model": {
     "description": "视频模型名称",
     "type": "string",

@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import asyncio
 import base64
+import json
 import re
 import time
 from dataclasses import dataclass
@@ -16,15 +17,17 @@ from astrbot.api.star import Context, Star, register
 from astrbot.core import AstrBotConfig
 from astrbot.core.utils.astrbot_path import get_astrbot_data_path
 
-try:
-    from zhipuai import ZhipuAI
-except ImportError:  # pragma: no cover - dependency is declared in requirements.txt
-    ZhipuAI = None
-
 
 VIDEO_DONE_STATUSES = {"success", "succeeded", "finished", "done", "completed"}
-VIDEO_FAILED_STATUSES = {"failed", "error", "canceled", "cancelled", "timeout"}
-VIDEO_PENDING_STATUSES = {"processing", "pending", "queued", "running", "submitted"}
+VIDEO_FAILED_STATUSES = {"fail", "failed", "error", "canceled", "cancelled", "timeout"}
+VIDEO_PENDING_STATUSES = {
+    "processing",
+    "pending",
+    "queued",
+    "running",
+    "submitted",
+    "in_progress",
+}
 
 
 @dataclass
@@ -38,7 +41,7 @@ class VideoQueryResult:
     "astrbot_plugin_kongcheng_ai",
     "GCHkongcheng",
     "智谱 AI 视频生成插件（文生视频 / 图生视频）",
-    "1.0.0",
+    "1.0.1",
 )
 class KongchengAIVideoPlugin(Star):
     def __init__(self, context: Context, config: AstrBotConfig | None = None):
@@ -53,8 +56,6 @@ class KongchengAIVideoPlugin(Star):
         """插件初始化。"""
         if self.save_video_local:
             self.video_cache_dir.mkdir(parents=True, exist_ok=True)
-        if ZhipuAI is None:
-            logger.warning("zhipuai 未安装，视频生成功能不可用。")
         logger.info("astrbot_plugin_kongcheng_ai 初始化完成。")
 
     async def terminate(self):
@@ -67,6 +68,10 @@ class KongchengAIVideoPlugin(Star):
 
     def _reload_config(self) -> None:
         self.api_key = str(self.config.get("api_key", "")).strip()
+        raw_api_base = str(
+            self.config.get("api_base", "https://open.bigmodel.cn/api/paas/v4")
+        ).strip()
+        self.api_base = self._normalize_api_base(raw_api_base)
         self.model = str(self.config.get("model", "CogVideoX-Flash")).strip()
         self.default_image_prompt = str(
             self.config.get("default_image_prompt", "让画面自然地动起来")
@@ -89,6 +94,18 @@ class KongchengAIVideoPlugin(Star):
         self.video_cache_dir = (
             get_astrbot_data_path() / "video_cache" / "astrbot_plugin_kongcheng_ai"
         )
+
+    @staticmethod
+    def _normalize_api_base(raw_base: str) -> str:
+        base = (raw_base or "").strip().rstrip("/")
+        if not base:
+            return "https://open.bigmodel.cn/api/paas/v4"
+        for suffix in ("/videos/generations", "/async-result"):
+            if base.endswith(suffix):
+                base = base[: -len(suffix)]
+        if "/api/paas/v4" not in base:
+            base = f"{base}/api/paas/v4"
+        return base.rstrip("/")
 
     @staticmethod
     def _extract_command_body(event: AstrMessageEvent, command_name: str) -> str:
@@ -141,12 +158,24 @@ class KongchengAIVideoPlugin(Star):
             msg = msg[:160] + "..."
         return msg
 
-    def _build_client(self):
-        if ZhipuAI is None:
-            raise RuntimeError("缺少 zhipuai 依赖，请先安装 requirements.txt")
-        if not self.api_key:
-            raise ValueError("未配置 API Key")
-        return ZhipuAI(api_key=self.api_key)
+    @staticmethod
+    def _extract_api_error(data: Any, raw_text: str, http_status: int) -> str:
+        if isinstance(data, dict):
+            error_obj = data.get("error")
+            if isinstance(error_obj, dict):
+                message = str(error_obj.get("message", "")).strip()
+                if message:
+                    return f"HTTP {http_status}: {message}"
+            if isinstance(error_obj, str) and error_obj.strip():
+                return f"HTTP {http_status}: {error_obj.strip()}"
+            for key in ("message", "msg", "detail"):
+                value = data.get(key)
+                if isinstance(value, str) and value.strip():
+                    return f"HTTP {http_status}: {value.strip()}"
+        fallback = (raw_text or "").strip()
+        if fallback:
+            return f"HTTP {http_status}: {fallback[:200]}"
+        return f"HTTP {http_status}: 请求失败"
 
     def _check_rate_limit(self, user_id: str) -> float:
         now_ts = time.time()
@@ -211,23 +240,54 @@ class KongchengAIVideoPlugin(Star):
             return base64.b64encode(image_bytes).decode("utf-8")
         raise ValueError("消息中没有检测到图片")
 
-    @staticmethod
-    def _object_to_dict(value: Any) -> Any:
-        if value is None:
-            return None
-        if isinstance(value, (str, int, float, bool)):
-            return value
-        if isinstance(value, dict):
-            return {k: KongchengAIVideoPlugin._object_to_dict(v) for k, v in value.items()}
-        if isinstance(value, list):
-            return [KongchengAIVideoPlugin._object_to_dict(v) for v in value]
-        if hasattr(value, "model_dump"):
-            return KongchengAIVideoPlugin._object_to_dict(value.model_dump())
-        if hasattr(value, "dict"):
-            return KongchengAIVideoPlugin._object_to_dict(value.dict())
-        if hasattr(value, "__dict__"):
-            return KongchengAIVideoPlugin._object_to_dict(vars(value))
-        return str(value)
+    async def _request_json(
+        self,
+        method: str,
+        url: str,
+        payload: dict[str, Any] | None = None,
+        timeout_seconds: int | None = None,
+    ) -> dict[str, Any]:
+        session = await self._ensure_http_session()
+        timeout = aiohttp.ClientTimeout(total=timeout_seconds or self.request_timeout_seconds)
+        headers = {
+            "Authorization": f"Bearer {self.api_key}",
+            "Content-Type": "application/json",
+        }
+
+        async with session.request(
+            method=method.upper(),
+            url=url,
+            headers=headers,
+            json=payload,
+            timeout=timeout,
+        ) as resp:
+            raw_text = await resp.text()
+            data: Any
+            try:
+                data = json.loads(raw_text) if raw_text else {}
+            except json.JSONDecodeError:
+                data = {}
+            if resp.status >= 400:
+                raise RuntimeError(self._extract_api_error(data, raw_text, resp.status))
+            if not isinstance(data, dict):
+                raise RuntimeError("接口返回格式异常")
+            return data
+
+    async def _submit_video_generation(self, prompt: str, image_b64: str | None = None) -> str:
+        payload: dict[str, Any] = {
+            "model": self.model,
+            "prompt": prompt,
+            "with_audio": True,
+        }
+        if image_b64:
+            payload["image_url"] = image_b64
+
+        url = f"{self.api_base}/videos/generations"
+        data = await self._request_json("POST", url, payload=payload)
+        task_id = str(data.get("id", "")).strip()
+        if not task_id:
+            raise RuntimeError("提交成功但未返回任务 ID")
+        return task_id
 
     @staticmethod
     def _extract_video_url(data: Any) -> str:
@@ -255,60 +315,36 @@ class KongchengAIVideoPlugin(Star):
             value = data.get(key)
             if isinstance(value, str) and value.strip():
                 return value.strip()
+            if isinstance(value, dict):
+                nested_msg = value.get("message")
+                if isinstance(nested_msg, str) and nested_msg.strip():
+                    return nested_msg.strip()
         return ""
 
-    async def _submit_text_video(self, prompt: str) -> str:
-        def _call():
-            client = self._build_client()
-            return client.videos.generations(
-                model=self.model,
-                prompt=prompt,
-                with_audio=True,
-            )
-
-        response = await asyncio.to_thread(_call)
-        data = self._object_to_dict(response)
-        task_id = ""
-        if isinstance(data, dict):
-            task_id = str(data.get("id", "")).strip()
-        if not task_id:
-            raise RuntimeError("未从接口返回中提取到任务 ID")
-        return task_id
-
-    async def _submit_image_video(self, prompt: str, image_b64: str) -> str:
-        def _call():
-            client = self._build_client()
-            return client.videos.generations(
-                model=self.model,
-                prompt=prompt,
-                image_url=image_b64,
-                with_audio=True,
-            )
-
-        response = await asyncio.to_thread(_call)
-        data = self._object_to_dict(response)
-        task_id = ""
-        if isinstance(data, dict):
-            task_id = str(data.get("id", "")).strip()
-        if not task_id:
-            raise RuntimeError("未从接口返回中提取到任务 ID")
-        return task_id
+    @staticmethod
+    def _looks_pending(text: str) -> bool:
+        lower = (text or "").lower()
+        keywords = ("processing", "pending", "running", "queue", "处理中", "排队")
+        return any(k in lower for k in keywords)
 
     async def _query_video_result(self, task_id: str) -> VideoQueryResult:
-        def _call():
-            client = self._build_client()
-            return client.videos.retrieve_videos_result(id=task_id)
-
-        response = await asyncio.to_thread(_call)
-        data = self._object_to_dict(response)
-        if not isinstance(data, dict):
-            raise RuntimeError("查询结果格式异常")
+        url = f"{self.api_base}/async-result/{task_id}"
+        data = await self._request_json("GET", url)
 
         raw_status = str(data.get("task_status") or data.get("status") or "").strip().lower()
-        status = raw_status or "unknown"
         video_url = self._extract_video_url(data.get("video_result", data))
         fail_reason = self._extract_fail_reason(data)
-        return VideoQueryResult(status=status, video_url=video_url, fail_reason=fail_reason)
+
+        if not raw_status:
+            if video_url:
+                raw_status = "success"
+            elif self._looks_pending(fail_reason):
+                raw_status = "processing"
+                fail_reason = ""
+            else:
+                raw_status = "processing"
+
+        return VideoQueryResult(status=raw_status, video_url=video_url, fail_reason=fail_reason)
 
     async def _download_video_to_cache(self, video_url: str, task_id: str) -> Path:
         self.video_cache_dir.mkdir(parents=True, exist_ok=True)
@@ -350,6 +386,7 @@ class KongchengAIVideoPlugin(Star):
             "finished": "已完成",
             "done": "已完成",
             "completed": "已完成",
+            "fail": "失败",
             "failed": "失败",
             "error": "失败",
             "canceled": "已取消",
@@ -377,7 +414,7 @@ class KongchengAIVideoPlugin(Star):
             return
 
         try:
-            task_id = await self._submit_text_video(prompt)
+            task_id = await self._submit_video_generation(prompt=prompt)
             yield event.plain_result(
                 "任务已提交。\n"
                 f"- task_id: {task_id}\n"
@@ -409,7 +446,7 @@ class KongchengAIVideoPlugin(Star):
             return
 
         try:
-            task_id = await self._submit_image_video(prompt=prompt, image_b64=image_b64)
+            task_id = await self._submit_video_generation(prompt=prompt, image_b64=image_b64)
             yield event.plain_result(
                 "图生视频任务已提交。\n"
                 f"- task_id: {task_id}\n"
@@ -449,7 +486,11 @@ class KongchengAIVideoPlugin(Star):
             return
 
         if result.status in VIDEO_FAILED_STATUSES:
-            reason = self._sanitize_error(result.fail_reason) if result.fail_reason else "无详细错误信息"
+            reason = (
+                self._sanitize_error(result.fail_reason)
+                if result.fail_reason
+                else "无详细错误信息"
+            )
             yield event.plain_result(f"任务状态：{status_text}\n失败原因：{reason}")
             return
 
@@ -494,6 +535,7 @@ class KongchengAIVideoPlugin(Star):
             "- /kc图生视频 让角色微笑并挥手（同时发送一张图片）\n"
             "- /kc视频查询 1234567890\n\n"
             "提示：\n"
+            "- 接口默认 base_url 为 https://open.bigmodel.cn/api/paas/v4\n"
             "- 如果开启 save_video_local，会把视频缓存到 data/video_cache/astrbot_plugin_kongcheng_ai/\n"
             "- 该插件默认模型为 CogVideoX-Flash，可在配置中修改。"
         )
