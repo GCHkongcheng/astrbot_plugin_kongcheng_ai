@@ -1,0 +1,70 @@
+{
+  "api_key": {
+    "description": "智谱 AI API Key",
+    "type": "string",
+    "hint": "用于调用智谱视频生成接口",
+    "default": "",
+    "obvious_hint": true
+  },
+  "model": {
+    "description": "视频模型名称",
+    "type": "string",
+    "hint": "默认使用 CogVideoX-Flash",
+    "default": "CogVideoX-Flash"
+  },
+  "default_image_prompt": {
+    "description": "图生视频默认提示词",
+    "type": "string",
+    "hint": "当 /kc图生视频 未附带文字提示词时使用",
+    "default": "让画面自然地动起来"
+  },
+  "request_timeout_seconds": {
+    "description": "接口超时时间（秒）",
+    "type": "int",
+    "default": 90
+  },
+  "download_timeout_seconds": {
+    "description": "下载超时时间（秒）",
+    "type": "int",
+    "default": 120
+  },
+  "min_request_interval_seconds": {
+    "description": "同一用户最小请求间隔（秒）",
+    "type": "float",
+    "hint": "用于防止短时间内频繁提交任务",
+    "default": 3
+  },
+  "max_image_size_mb": {
+    "description": "图生视频最大图片大小（MB）",
+    "type": "int",
+    "default": 10
+  },
+  "max_video_size_mb": {
+    "description": "缓存视频最大体积（MB）",
+    "type": "int",
+    "default": 100
+  },
+  "save_video_local": {
+    "description": "是否缓存视频到本地",
+    "type": "bool",
+    "hint": "开启后会保存到 data/video_cache/astrbot_plugin_kongcheng_ai/",
+    "default": false
+  },
+  "return_video_url": {
+    "description": "查询成功时返回视频链接",
+    "type": "bool",
+    "default": true
+  },
+  "attach_video_result": {
+    "description": "查询成功时附带视频消息",
+    "type": "bool",
+    "hint": "依赖平台对视频消息的支持",
+    "default": true
+  },
+  "max_cache_files": {
+    "description": "本地缓存最大文件数",
+    "type": "int",
+    "hint": "超过后自动清理最旧缓存文件",
+    "default": 20
+  }
+}
