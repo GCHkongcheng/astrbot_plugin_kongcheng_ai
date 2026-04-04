@@ -56,7 +56,7 @@ class KongchengAIVideoPlugin(Star):
             self.video_cache_dir.mkdir(parents=True, exist_ok=True)
         if self.save_image_local:
             self.image_cache_dir.mkdir(parents=True, exist_ok=True)
-        if self.webui_auto_start and self.web_admin:
+        if self.webui_enabled and self.web_admin:
             try:
                 await self.web_admin.start()
             except Exception as exc:
@@ -143,7 +143,8 @@ class KongchengAIVideoPlugin(Star):
         self.attach_image_result = bool(source_config.get("attach_image_result", True))
         self.save_video_local = bool(source_config.get("save_video_local", False))
         self.save_image_local = bool(source_config.get("save_image_local", False))
-        self.webui_auto_start = bool(source_config.get("webui_auto_start", False))
+        self.webui_enabled = bool(source_config.get("webui_enabled", source_config.get("webui_auto_start", False)))
+        self.webui_auto_start = self.webui_enabled
         self.webui_host = str(source_config.get("webui_host", "127.0.0.1")).strip() or "127.0.0.1"
         self.webui_port = max(1, int(source_config.get("webui_port", 8765)))
 
@@ -358,10 +359,47 @@ class KongchengAIVideoPlugin(Star):
             "selected_image_provider": self.router.default_image_provider,
             "enabled_video_providers": enabled["video"],
             "enabled_image_providers": enabled["image"],
+            "zhipu_api_key": str(self.normalized_config.get("zhipu_api_key", "")),
+            "zhipu_api_base": str(self.normalized_config.get("zhipu_api_base", "")),
+            "zhipu_video_model": str(self.normalized_config.get("zhipu_video_model", "")),
+            "zhipu_image_model": str(self.normalized_config.get("zhipu_image_model", "")),
+            "zhipu_video_with_audio": bool(self.normalized_config.get("zhipu_video_with_audio", True)),
+            "seedance_api_key": str(self.normalized_config.get("seedance_api_key", "")),
+            "seedance_api_base": str(self.normalized_config.get("seedance_api_base", "")),
+            "seedance_video_model": str(self.normalized_config.get("seedance_video_model", "")),
+            "seedance_resolution": str(self.normalized_config.get("seedance_resolution", "")),
+            "seedance_duration": int(self.normalized_config.get("seedance_duration", 5)),
+            "seedance_aspect_ratio": str(self.normalized_config.get("seedance_aspect_ratio", "")),
+            "seedance_generate_audio": bool(self.normalized_config.get("seedance_generate_audio", True)),
+            "seedance_fixed_lens": bool(self.normalized_config.get("seedance_fixed_lens", False)),
+            "seedance_generate_path": str(self.normalized_config.get("seedance_generate_path", "/generate")),
+            "seedance_status_path": str(self.normalized_config.get("seedance_status_path", "/status")),
+            "openai_image_api_key": str(self.normalized_config.get("openai_image_api_key", "")),
+            "openai_image_api_base": str(self.normalized_config.get("openai_image_api_base", "")),
+            "openai_image_generate_path": str(self.normalized_config.get("openai_image_generate_path", "/images/generations")),
+            "openai_image_edit_path": str(self.normalized_config.get("openai_image_edit_path", "")),
+            "openai_image_model": str(self.normalized_config.get("openai_image_model", "")),
             "custom_image_providers_json": str(self.normalized_config.get("custom_image_providers_json", "[]")),
             "custom_video_providers_json": str(self.normalized_config.get("custom_video_providers_json", "[]")),
+            "default_image_size": self.default_image_size,
+            "default_i2v_prompt": self.default_i2v_prompt,
+            "default_i2i_prompt": self.default_i2i_prompt,
+            "request_timeout_seconds": self.request_timeout_seconds,
+            "download_timeout_seconds": self.download_timeout_seconds,
+            "request_retry_count": self.request_retry_count,
+            "min_request_interval_seconds": self.min_request_interval_seconds,
+            "max_image_size_mb": self.max_image_size_mb,
+            "max_video_size_mb": self.max_video_size_mb,
+            "max_cache_files": self.max_cache_files,
+            "return_video_url": self.return_video_url,
+            "return_image_url": self.return_image_url,
+            "attach_video_result": self.attach_video_result,
+            "attach_image_result": self.attach_image_result,
+            "save_video_local": self.save_video_local,
+            "save_image_local": self.save_image_local,
             "webui_host": self.webui_host,
             "webui_port": self.webui_port,
+            "webui_enabled": self.webui_enabled,
             "webui_auto_start": self.webui_auto_start,
             "runtime_overrides": dict(self.runtime_overrides),
             "webui_running": bool(self.web_admin and self.web_admin.running),
@@ -381,12 +419,73 @@ class KongchengAIVideoPlugin(Star):
         allowed_keys = {
             "selected_video_provider",
             "selected_image_provider",
+            "zhipu_api_key",
+            "zhipu_api_base",
+            "zhipu_video_model",
+            "zhipu_image_model",
+            "zhipu_video_with_audio",
+            "seedance_api_key",
+            "seedance_api_base",
+            "seedance_video_model",
+            "seedance_resolution",
+            "seedance_duration",
+            "seedance_aspect_ratio",
+            "seedance_generate_audio",
+            "seedance_fixed_lens",
+            "seedance_generate_path",
+            "seedance_status_path",
+            "openai_image_api_key",
+            "openai_image_api_base",
+            "openai_image_generate_path",
+            "openai_image_edit_path",
+            "openai_image_model",
             "custom_image_providers_json",
             "custom_video_providers_json",
+            "default_image_size",
+            "default_i2v_prompt",
+            "default_i2i_prompt",
+            "request_timeout_seconds",
+            "download_timeout_seconds",
+            "request_retry_count",
+            "min_request_interval_seconds",
+            "max_image_size_mb",
+            "max_video_size_mb",
+            "max_cache_files",
+            "return_video_url",
+            "return_image_url",
+            "attach_video_result",
+            "attach_image_result",
+            "save_video_local",
+            "save_image_local",
             "webui_host",
             "webui_port",
+            "webui_enabled",
             "webui_auto_start",
         }
+        bool_keys = {
+            "zhipu_video_with_audio",
+            "seedance_generate_audio",
+            "seedance_fixed_lens",
+            "return_video_url",
+            "return_image_url",
+            "attach_video_result",
+            "attach_image_result",
+            "save_video_local",
+            "save_image_local",
+            "webui_enabled",
+            "webui_auto_start",
+        }
+        int_keys = {
+            "seedance_duration",
+            "request_timeout_seconds",
+            "download_timeout_seconds",
+            "request_retry_count",
+            "max_image_size_mb",
+            "max_video_size_mb",
+            "max_cache_files",
+            "webui_port",
+        }
+        float_keys = {"min_request_interval_seconds"}
         sanitized: dict[str, Any] = {}
         for key, value in data.items():
             if key not in allowed_keys:
@@ -398,19 +497,77 @@ class KongchengAIVideoPlugin(Star):
                     raise RuntimeError(f"{key} 必须是 JSON 数组")
                 sanitized[key] = json.dumps(parsed, ensure_ascii=False)
                 continue
-            if key == "webui_port":
-                sanitized[key] = max(1, int(value))
+            if key == "zhipu_api_base":
+                sanitized[key] = self._normalize_zhipu_api_base(str(value).strip())
                 continue
-            if key == "webui_auto_start":
+            if key in bool_keys:
                 sanitized[key] = self._to_bool(value)
+                continue
+            if key in int_keys:
+                parsed_int = int(value)
+                if key == "webui_port":
+                    parsed_int = max(1, parsed_int)
+                sanitized[key] = parsed_int
+                continue
+            if key in float_keys:
+                sanitized[key] = float(value)
+                continue
+            if key in {"seedance_api_base", "openai_image_api_base"}:
+                sanitized[key] = str(value).strip().rstrip("/")
                 continue
             sanitized[key] = str(value).strip()
         return sanitized
 
+    async def _delayed_stop_webui(self, delay_seconds: float = 0.2) -> None:
+        await asyncio.sleep(delay_seconds)
+        if self.web_admin and self.web_admin.running:
+            try:
+                await self.web_admin.stop()
+            except Exception:
+                pass
+
+    async def _delayed_restart_webui(self, delay_seconds: float = 0.2) -> None:
+        await asyncio.sleep(delay_seconds)
+        if not self.web_admin:
+            return
+        try:
+            if self.web_admin.running:
+                await self.web_admin.stop()
+            if self.webui_enabled:
+                await self.web_admin.start()
+        except Exception:
+            pass
+
+    async def _sync_webui_runtime_state(
+        self,
+        *,
+        host_or_port_changed: bool,
+        was_running: bool,
+    ) -> None:
+        if not self.web_admin:
+            return
+
+        if self.webui_enabled:
+            if was_running and host_or_port_changed:
+                asyncio.create_task(self._delayed_restart_webui())
+                return
+            if not was_running:
+                await self.web_admin.start()
+            return
+
+        if was_running:
+            asyncio.create_task(self._delayed_stop_webui())
+
     async def apply_webui_runtime_config(self, data: dict[str, Any]) -> dict[str, Any]:
         sanitized = self._sanitize_webui_config_payload(data)
+        host_or_port_changed = any(k in sanitized for k in {"webui_host", "webui_port"})
+        was_running = bool(self.web_admin and self.web_admin.running)
         self.runtime_overrides.update(sanitized)
         self._reload_config()
+        await self._sync_webui_runtime_state(
+            host_or_port_changed=host_or_port_changed,
+            was_running=was_running,
+        )
         return await self.get_webui_state()
 
     async def persist_webui_config(self, data: dict[str, Any]) -> dict[str, Any]:
@@ -436,9 +593,10 @@ class KongchengAIVideoPlugin(Star):
 
         self._reload_config()
 
-        if self.web_admin and webui_running and host_or_port_changed:
-            await self.web_admin.stop()
-            await self.web_admin.start()
+        await self._sync_webui_runtime_state(
+            host_or_port_changed=host_or_port_changed,
+            was_running=webui_running,
+        )
 
         return await self.get_webui_state()
 
@@ -495,33 +653,17 @@ class KongchengAIVideoPlugin(Star):
             yield event.plain_result("WebUI 依赖不可用，请确认 Quart/Hypercorn 已安装。")
             return
 
-        if action in {"", "状态", "status"}:
+        if action in {"", "状态", "status", "开启", "启动", "on", "open", "start", "关闭", "停止", "off", "close", "stop"}:
             state = "运行中" if self.web_admin.running else "未运行"
             yield event.plain_result(
                 f"WebUI 状态: {state}\n地址: {self.web_admin.base_url}\n"
-                "命令:\n/kc后台 开启\n/kc后台 关闭\n/kc后台 状态"
+                f"配置开关(webui_enabled): {'true' if self.webui_enabled else 'false'}\n"
+                "说明: WebUI 启停已改为由插件配置项 webui_enabled 控制，"
+                "不再通过 /kc后台 开启或关闭。"
             )
             return
 
-        if action in {"开启", "启动", "on", "open", "start"}:
-            try:
-                await self.web_admin.start()
-            except Exception as exc:
-                yield event.plain_result(f"启动失败: {self._sanitize_error(str(exc))}")
-                return
-            yield event.plain_result(f"WebUI 已启动: {self.web_admin.base_url}")
-            return
-
-        if action in {"关闭", "停止", "off", "close", "stop"}:
-            try:
-                await self.web_admin.stop()
-            except Exception as exc:
-                yield event.plain_result(f"关闭失败: {self._sanitize_error(str(exc))}")
-                return
-            yield event.plain_result("WebUI 已关闭。")
-            return
-
-        yield event.plain_result("用法: /kc后台 [开启|关闭|状态]")
+        yield event.plain_result("用法: /kc后台 状态")
 
     @filter.command("kc生图")
     async def create_image(self, event: AstrMessageEvent):
@@ -770,7 +912,7 @@ class KongchengAIVideoPlugin(Star):
             "4. /kc图生视频 [提示词] + 图片\n"
             "5. /kc视频查询 task_id\n"
             "6. /kc供应商\n\n"
-            "7. /kc后台 [开启|关闭|状态]\n\n"
+            "7. /kc后台 状态\n\n"
             "示例：\n"
             "- /kc视频 一艘飞船穿越云层\n"
             "- /kc图生视频 让人物微笑并挥手\n"

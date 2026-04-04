@@ -8,7 +8,7 @@
 - 图生视频：`/kc图生视频 [提示词]` + 图片
 - 查询：`/kc视频查询 <task_id>`
 - 供应商状态：`/kc供应商`
-- WebUI 管理台：`/kc后台 [开启|关闭|状态]`
+- WebUI 状态：`/kc后台 状态`
 
 ## 供应商
 
@@ -25,7 +25,7 @@
 /kc视频 一艘飞船穿越云层，电影感
 /kc图生视频 让人物微笑并挥手
 /kc视频查询 <task_id>
-/kc后台 开启
+/kc后台 状态
 ```
 
 ## 配置说明
@@ -38,7 +38,7 @@
 - OpenAI兼容生图：`openai_image_api_key`、`openai_image_api_base`、`openai_image_generate_path`
 - 自定义生图：`custom_image_providers_json`
 - 自定义视频：`custom_video_providers_json`
-- WebUI：`webui_auto_start`、`webui_host`、`webui_port`
+- WebUI：`webui_enabled`、`webui_host`、`webui_port`
 - 通用稳定性：`request_timeout_seconds`、`request_retry_count`
 - 说明：只需要配置你选中的供应商参数，不需要同时配置全部供应商
 
@@ -51,14 +51,18 @@
 
 ## WebUI 页面
 
-1. 通过命令启动：`/kc后台 开启`
+1. 通过插件配置启用：`webui_enabled=true`
 2. 默认地址：`http://127.0.0.1:8765`
 3. 页面支持：
    - 查看当前生效供应商
-   - 编辑并应用运行时配置（`仅运行时应用`，不写入配置文件）
-   - 持久化保存配置（`持久化保存`，会写入插件配置；若 host/port 变化会自动重启 WebUI）
+   - 编辑并应用测试配置（`测试应用(不保存)`，不写入插件配置）
+   - 保存配置（`保存配置(同步插件)`，写入插件配置；若 host/port 变化会自动重启 WebUI）
+   - 直接配置 API Key、API Base、模型、分辨率/时长、超时重试、返回与附件策略等参数
    - 直接测试生图、视频提交、视频查询
-4. 关闭命令：`/kc后台 关闭`
+   - 视频任务自动轮询、操作历史记录（浏览器本地存储）
+   - 命令助手（按当前输入生成可复制命令）
+   - 一键填充自定义供应商 JSON 模板与健康检查延迟显示
+4. 开关规则：`webui_enabled=true` 启用，`webui_enabled=false` 关闭
 
 生图示例：
 
@@ -100,5 +104,5 @@
 2. 执行 `/kc供应商` 确认默认路由和可用供应商。
 3. 执行 `/kc视频帮助` 查看命令说明。
 4. 发送最小示例命令验证路由是否正确。
-5. 按需执行 `/kc后台 开启` 打开页面做配置与接口联调。
+5. 在插件配置中启用 `webui_enabled` 后打开页面做配置与接口联调。
 6. 修改代码后在插件管理页执行 `Reload Plugin`。

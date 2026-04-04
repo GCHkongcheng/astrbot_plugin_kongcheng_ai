@@ -371,6 +371,60 @@
       background: #f8fcfb;
     }
 
+    .history-list {
+      display: grid;
+      gap: 8px;
+      max-height: 260px;
+      overflow: auto;
+    }
+
+    .history-item {
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      padding: 8px;
+      background: #f9fcfb;
+      font-size: 12px;
+    }
+
+    .history-item b {
+      font-size: 13px;
+    }
+
+    .history-meta {
+      color: var(--muted);
+      margin-top: 3px;
+      line-height: 1.5;
+    }
+
+    .history-actions {
+      margin-top: 6px;
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
+    }
+
+    .history-actions button {
+      min-width: auto;
+      padding: 4px 8px;
+      font-size: 12px;
+    }
+
+    .cmd-preview {
+      margin: 0;
+      min-height: 124px;
+      max-height: 260px;
+      overflow: auto;
+      white-space: pre-wrap;
+      word-break: break-word;
+      background: #f6fbf8;
+      border: 1px dashed #bfd8d0;
+      border-radius: 10px;
+      padding: 10px;
+      font-size: 12px;
+      line-height: 1.45;
+      font-family: Consolas, "Courier New", monospace;
+    }
+
     .footer-note {
       margin-top: 10px;
       font-size: 12px;
@@ -436,6 +490,7 @@
         <span class="pill" id="pillRunning">WebUI 未就绪</span>
         <span class="pill" id="pillImageProvider">生图: -</span>
         <span class="pill" id="pillVideoProvider">视频: -</span>
+        <span class="pill" id="pillPing">延迟: -</span>
       </div>
     </section>
 
@@ -444,7 +499,10 @@
         <section class="card">
           <div class="card-head">
             <h2>运行状态</h2>
-            <button class="btn-secondary" id="btnRefresh">刷新状态</button>
+            <div class="actions" style="margin:0;">
+              <button class="btn-secondary" id="btnPing">健康检查</button>
+              <button class="btn-secondary" id="btnRefresh">刷新状态</button>
+            </div>
           </div>
           <div class="status-grid" id="stateGrid">
             <div class="status-item"><b>状态</b><span>加载中</span></div>
@@ -478,25 +536,215 @@
             </label>
           </div>
           <label class="toggle">
-            <input type="checkbox" id="webuiAutoStart" />
-            webui_auto_start
+            <input type="checkbox" id="webuiEnabled" />
+            webui_enabled
           </label>
+
+          <label class="field">
+            <span>zhipu_api_key</span>
+            <input id="zhipuApiKey" type="password" placeholder="智谱 API Key" />
+          </label>
+          <div class="grid-2">
+            <label class="field">
+              <span>zhipu_api_base</span>
+              <input id="zhipuApiBase" placeholder="https://open.bigmodel.cn/api/paas/v4" />
+            </label>
+            <label class="field">
+              <span>zhipu_video_model</span>
+              <input id="zhipuVideoModel" placeholder="CogVideoX-Flash" />
+            </label>
+          </div>
+          <div class="grid-2">
+            <label class="field">
+              <span>zhipu_image_model</span>
+              <input id="zhipuImageModel" placeholder="glm-image" />
+            </label>
+            <label class="toggle" style="margin-top: 26px;">
+              <input type="checkbox" id="zhipuVideoWithAudio" />
+              zhipu_video_with_audio
+            </label>
+          </div>
+
+          <label class="field">
+            <span>seedance_api_key</span>
+            <input id="seedanceApiKey" type="password" placeholder="Seedance API Key" />
+          </label>
+          <div class="grid-2">
+            <label class="field">
+              <span>seedance_api_base</span>
+              <input id="seedanceApiBase" placeholder="https://seedanceapi.org/v1" />
+            </label>
+            <label class="field">
+              <span>seedance_video_model</span>
+              <input id="seedanceVideoModel" placeholder="可选" />
+            </label>
+          </div>
+          <div class="grid-2">
+            <label class="field">
+              <span>seedance_resolution</span>
+              <input id="seedanceResolution" placeholder="1080p" />
+            </label>
+            <label class="field">
+              <span>seedance_duration</span>
+              <input id="seedanceDuration" placeholder="5" />
+            </label>
+          </div>
+          <div class="grid-2">
+            <label class="field">
+              <span>seedance_aspect_ratio</span>
+              <input id="seedanceAspectRatio" placeholder="16:9" />
+            </label>
+            <label class="field">
+              <span>seedance_generate_path</span>
+              <input id="seedanceGeneratePath" placeholder="/generate" />
+            </label>
+          </div>
+          <div class="grid-2">
+            <label class="field">
+              <span>seedance_status_path</span>
+              <input id="seedanceStatusPath" placeholder="/status" />
+            </label>
+            <div style="display:flex;gap:14px;align-items:center;flex-wrap:wrap;padding-top:26px;">
+              <label class="toggle" style="margin-top:0;">
+                <input type="checkbox" id="seedanceGenerateAudio" />
+                seedance_generate_audio
+              </label>
+              <label class="toggle" style="margin-top:0;">
+                <input type="checkbox" id="seedanceFixedLens" />
+                seedance_fixed_lens
+              </label>
+            </div>
+          </div>
+
+          <label class="field">
+            <span>openai_image_api_key</span>
+            <input id="openaiImageApiKey" type="password" placeholder="OpenAI兼容 API Key" />
+          </label>
+          <div class="grid-2">
+            <label class="field">
+              <span>openai_image_api_base</span>
+              <input id="openaiImageApiBase" placeholder="https://api.openai.com/v1" />
+            </label>
+            <label class="field">
+              <span>openai_image_model</span>
+              <input id="openaiImageModel" placeholder="gpt-image-1" />
+            </label>
+          </div>
+          <div class="grid-2">
+            <label class="field">
+              <span>openai_image_generate_path</span>
+              <input id="openaiImageGeneratePath" placeholder="/images/generations" />
+            </label>
+            <label class="field">
+              <span>openai_image_edit_path</span>
+              <input id="openaiImageEditPath" placeholder="可选" />
+            </label>
+          </div>
+
+          <div class="grid-2">
+            <label class="field">
+              <span>default_image_size</span>
+              <input id="defaultImageSize" placeholder="1024x1024" />
+            </label>
+            <label class="field">
+              <span>request_timeout_seconds</span>
+              <input id="requestTimeoutSeconds" placeholder="90" />
+            </label>
+          </div>
+          <div class="grid-2">
+            <label class="field">
+              <span>request_retry_count</span>
+              <input id="requestRetryCount" placeholder="1" />
+            </label>
+            <label class="field">
+              <span>download_timeout_seconds</span>
+              <input id="downloadTimeoutSeconds" placeholder="120" />
+            </label>
+          </div>
+          <div class="grid-2">
+            <label class="field">
+              <span>min_request_interval_seconds</span>
+              <input id="minRequestIntervalSeconds" placeholder="3" />
+            </label>
+            <label class="field">
+              <span>max_cache_files</span>
+              <input id="maxCacheFiles" placeholder="20" />
+            </label>
+          </div>
+          <div class="grid-2">
+            <label class="field">
+              <span>max_image_size_mb</span>
+              <input id="maxImageSizeMb" placeholder="10" />
+            </label>
+            <label class="field">
+              <span>max_video_size_mb</span>
+              <input id="maxVideoSizeMb" placeholder="100" />
+            </label>
+          </div>
+          <label class="field">
+            <span>default_i2i_prompt</span>
+            <input id="defaultI2iPrompt" placeholder="图生图默认提示词" />
+          </label>
+          <label class="field">
+            <span>default_i2v_prompt</span>
+            <input id="defaultI2vPrompt" placeholder="图生视频默认提示词" />
+          </label>
+          <div style="display:flex;gap:14px;align-items:center;flex-wrap:wrap;padding-top:6px;">
+            <label class="toggle" style="margin-top:0;">
+              <input type="checkbox" id="returnImageUrl" />
+              return_image_url
+            </label>
+            <label class="toggle" style="margin-top:0;">
+              <input type="checkbox" id="returnVideoUrl" />
+              return_video_url
+            </label>
+            <label class="toggle" style="margin-top:0;">
+              <input type="checkbox" id="attachImageResult" />
+              attach_image_result
+            </label>
+            <label class="toggle" style="margin-top:0;">
+              <input type="checkbox" id="attachVideoResult" />
+              attach_video_result
+            </label>
+            <label class="toggle" style="margin-top:0;">
+              <input type="checkbox" id="saveImageLocal" />
+              save_image_local
+            </label>
+            <label class="toggle" style="margin-top:0;">
+              <input type="checkbox" id="saveVideoLocal" />
+              save_video_local
+            </label>
+          </div>
 
           <label class="field">
             <span>custom_image_providers_json</span>
             <textarea id="customImageJson" placeholder='[{"name":"myimg","api_key":"sk-xxx","api_base":"https://api.example.com/v1"}]'></textarea>
           </label>
+          <div class="actions">
+            <button class="btn-secondary" id="btnFillImageTpl">填充生图模板</button>
+          </div>
           <label class="field">
             <span>custom_video_providers_json</span>
             <textarea id="customVideoJson" placeholder='[{"name":"myvideo","api_key":"sk-xxx","api_base":"https://api.example.com/v1"}]'></textarea>
           </label>
+          <div class="actions">
+            <button class="btn-secondary" id="btnFillVideoTpl">填充视频模板</button>
+          </div>
 
           <div class="actions">
-            <button id="btnApplyConfig">仅运行时应用</button>
-            <button class="btn-secondary" id="btnPersistConfig">持久化保存</button>
+            <button id="btnApplyConfig">测试应用(不保存)</button>
+            <button class="btn-secondary" id="btnPersistConfig">保存配置(同步插件)</button>
             <button class="btn-secondary" id="btnFormatJson">格式化 JSON</button>
           </div>
-          <div class="footer-note">持久化保存会写入插件配置；若 host/port 变化，WebUI 可能短暂重启。</div>
+          <div class="footer-note">只有“保存配置(同步插件)”会写入插件配置；测试应用只在当前运行期生效。</div>
+        </section>
+
+        <section class="card">
+          <div class="card-head">
+            <h2>命令助手</h2>
+            <button class="btn-secondary" id="btnCopyCmd">复制命令</button>
+          </div>
+          <pre class="cmd-preview" id="cmdPreview">等待状态加载...</pre>
         </section>
       </div>
 
@@ -536,6 +784,35 @@
             <span>task_id</span>
             <input id="videoTaskId" placeholder="提交后自动回填 task_id" />
           </label>
+          <div class="grid-2">
+            <label class="field">
+              <span>轮询间隔(秒)</span>
+              <input id="pollInterval" value="5" />
+            </label>
+            <label class="field">
+              <span>轮询上限(次)</span>
+              <input id="pollMaxRounds" value="40" />
+            </label>
+          </div>
+          <label class="toggle">
+            <input type="checkbox" id="autoPollAfterSubmit" checked />
+            提交成功后自动轮询
+          </label>
+          <div class="actions">
+            <button class="btn-warn" id="btnStartPoll">开始轮询</button>
+            <button class="btn-secondary" id="btnStopPoll">停止轮询</button>
+          </div>
+          <div class="footer-note" id="pollStatus">轮询状态: 未启动</div>
+        </section>
+
+        <section class="card">
+          <div class="card-head">
+            <h2>操作历史</h2>
+            <button class="btn-secondary" id="btnClearHistory">清空历史</button>
+          </div>
+          <div class="history-list" id="historyList">
+            <div class="preview-empty">暂无历史记录。</div>
+          </div>
         </section>
       </div>
     </section>
@@ -558,6 +835,32 @@
   <div class="toast" id="toast"></div>
 
   <script>
+    const STORAGE_KEY = "kc_webui_history_v2";
+    const IMAGE_TEMPLATE = [
+      {
+        name: "myimg",
+        api_key: "sk-xxx",
+        api_base: "https://api.example.com/v1",
+        generate_path: "/images/generations",
+        model: "gpt-image-1"
+      }
+    ];
+    const VIDEO_TEMPLATE = [
+      {
+        name: "myvideo",
+        api_key: "sk-xxx",
+        api_base: "https://api.example.com/v1",
+        submit_path: "/generate",
+        query_path: "/status",
+        task_id_paths: ["data.task_id"],
+        status_paths: ["data.status"],
+        video_url_paths: ["data.url"],
+        support_i2v: true,
+        i2v_input_type: "url",
+        i2v_field: "image_url"
+      }
+    ];
+
     const refs = {
       output: document.getElementById("output"),
       previewArea: document.getElementById("previewArea"),
@@ -567,29 +870,84 @@
       pillRunning: document.getElementById("pillRunning"),
       pillImageProvider: document.getElementById("pillImageProvider"),
       pillVideoProvider: document.getElementById("pillVideoProvider"),
+      pillPing: document.getElementById("pillPing"),
       selectedImage: document.getElementById("selectedImage"),
       selectedVideo: document.getElementById("selectedVideo"),
       webuiHost: document.getElementById("webuiHost"),
       webuiPort: document.getElementById("webuiPort"),
-      webuiAutoStart: document.getElementById("webuiAutoStart"),
+      webuiEnabled: document.getElementById("webuiEnabled"),
+      zhipuApiKey: document.getElementById("zhipuApiKey"),
+      zhipuApiBase: document.getElementById("zhipuApiBase"),
+      zhipuVideoModel: document.getElementById("zhipuVideoModel"),
+      zhipuImageModel: document.getElementById("zhipuImageModel"),
+      zhipuVideoWithAudio: document.getElementById("zhipuVideoWithAudio"),
+      seedanceApiKey: document.getElementById("seedanceApiKey"),
+      seedanceApiBase: document.getElementById("seedanceApiBase"),
+      seedanceVideoModel: document.getElementById("seedanceVideoModel"),
+      seedanceResolution: document.getElementById("seedanceResolution"),
+      seedanceDuration: document.getElementById("seedanceDuration"),
+      seedanceAspectRatio: document.getElementById("seedanceAspectRatio"),
+      seedanceGenerateAudio: document.getElementById("seedanceGenerateAudio"),
+      seedanceFixedLens: document.getElementById("seedanceFixedLens"),
+      seedanceGeneratePath: document.getElementById("seedanceGeneratePath"),
+      seedanceStatusPath: document.getElementById("seedanceStatusPath"),
+      openaiImageApiKey: document.getElementById("openaiImageApiKey"),
+      openaiImageApiBase: document.getElementById("openaiImageApiBase"),
+      openaiImageGeneratePath: document.getElementById("openaiImageGeneratePath"),
+      openaiImageEditPath: document.getElementById("openaiImageEditPath"),
+      openaiImageModel: document.getElementById("openaiImageModel"),
+      defaultImageSize: document.getElementById("defaultImageSize"),
+      defaultI2vPrompt: document.getElementById("defaultI2vPrompt"),
+      defaultI2iPrompt: document.getElementById("defaultI2iPrompt"),
+      requestTimeoutSeconds: document.getElementById("requestTimeoutSeconds"),
+      downloadTimeoutSeconds: document.getElementById("downloadTimeoutSeconds"),
+      requestRetryCount: document.getElementById("requestRetryCount"),
+      minRequestIntervalSeconds: document.getElementById("minRequestIntervalSeconds"),
+      maxImageSizeMb: document.getElementById("maxImageSizeMb"),
+      maxVideoSizeMb: document.getElementById("maxVideoSizeMb"),
+      maxCacheFiles: document.getElementById("maxCacheFiles"),
+      returnVideoUrl: document.getElementById("returnVideoUrl"),
+      returnImageUrl: document.getElementById("returnImageUrl"),
+      attachVideoResult: document.getElementById("attachVideoResult"),
+      attachImageResult: document.getElementById("attachImageResult"),
+      saveVideoLocal: document.getElementById("saveVideoLocal"),
+      saveImageLocal: document.getElementById("saveImageLocal"),
       customImageJson: document.getElementById("customImageJson"),
       customVideoJson: document.getElementById("customVideoJson"),
       imgPrompt: document.getElementById("imgPrompt"),
       imgSize: document.getElementById("imgSize"),
       videoPrompt: document.getElementById("videoPrompt"),
       videoTaskId: document.getElementById("videoTaskId"),
+      pollInterval: document.getElementById("pollInterval"),
+      pollMaxRounds: document.getElementById("pollMaxRounds"),
+      autoPollAfterSubmit: document.getElementById("autoPollAfterSubmit"),
+      pollStatus: document.getElementById("pollStatus"),
+      historyList: document.getElementById("historyList"),
+      cmdPreview: document.getElementById("cmdPreview"),
+      btnPing: document.getElementById("btnPing"),
       btnRefresh: document.getElementById("btnRefresh"),
       btnApplyConfig: document.getElementById("btnApplyConfig"),
       btnPersistConfig: document.getElementById("btnPersistConfig"),
       btnFormatJson: document.getElementById("btnFormatJson"),
+      btnFillImageTpl: document.getElementById("btnFillImageTpl"),
+      btnFillVideoTpl: document.getElementById("btnFillVideoTpl"),
       btnTestImage: document.getElementById("btnTestImage"),
       btnTestVideo: document.getElementById("btnTestVideo"),
       btnQueryVideo: document.getElementById("btnQueryVideo"),
+      btnStartPoll: document.getElementById("btnStartPoll"),
+      btnStopPoll: document.getElementById("btnStopPoll"),
       btnCopyResult: document.getElementById("btnCopyResult"),
       btnClearResult: document.getElementById("btnClearResult"),
+      btnCopyCmd: document.getElementById("btnCopyCmd"),
+      btnClearHistory: document.getElementById("btnClearHistory"),
     };
 
     let lastResult = null;
+    let historyItems = [];
+    let autoPollTimer = null;
+    let autoPollRound = 0;
+    let autoPollBusy = false;
+    let autoPollMaxRounds = 40;
 
     function showToast(message, isError = false) {
       refs.toast.textContent = message;
@@ -611,13 +969,17 @@
 
     function setLoading(loading) {
       const buttons = [
+        refs.btnPing,
         refs.btnRefresh,
         refs.btnApplyConfig,
         refs.btnPersistConfig,
         refs.btnFormatJson,
+        refs.btnFillImageTpl,
+        refs.btnFillVideoTpl,
         refs.btnTestImage,
         refs.btnTestVideo,
         refs.btnQueryVideo,
+        refs.btnStartPoll,
       ];
       for (const btn of buttons) {
         btn.disabled = loading;
@@ -706,7 +1068,7 @@
 
       refs.stateGrid.innerHTML = `
         <div class="status-item"><b>WebUI地址</b><span>${escapeHTML(state.webui_url || "-")}</span></div>
-        <div class="status-item"><b>AutoStart</b><span>${state.webui_auto_start ? "true" : "false"}</span></div>
+        <div class="status-item"><b>WebUI启用</b><span>${state.webui_enabled ? "true" : "false"}</span></div>
         <div class="status-item"><b>生图供应商</b><span>${escapeHTML(state.selected_image_provider || "-")}</span></div>
         <div class="status-item"><b>视频供应商</b><span>${escapeHTML(state.selected_video_provider || "-")}</span></div>
         <div class="status-item"><b>webui_host</b><span>${escapeHTML(state.webui_host || "-")}</span></div>
@@ -728,9 +1090,46 @@
       refs.selectedVideo.value = state.selected_video_provider || "";
       refs.webuiHost.value = state.webui_host || "127.0.0.1";
       refs.webuiPort.value = String(state.webui_port || 8765);
-      refs.webuiAutoStart.checked = !!state.webui_auto_start;
+      refs.webuiEnabled.checked = !!state.webui_enabled;
+      refs.zhipuApiKey.value = state.zhipu_api_key || "";
+      refs.zhipuApiBase.value = state.zhipu_api_base || "";
+      refs.zhipuVideoModel.value = state.zhipu_video_model || "";
+      refs.zhipuImageModel.value = state.zhipu_image_model || "";
+      refs.zhipuVideoWithAudio.checked = !!state.zhipu_video_with_audio;
+      refs.seedanceApiKey.value = state.seedance_api_key || "";
+      refs.seedanceApiBase.value = state.seedance_api_base || "";
+      refs.seedanceVideoModel.value = state.seedance_video_model || "";
+      refs.seedanceResolution.value = state.seedance_resolution || "";
+      refs.seedanceDuration.value = String(state.seedance_duration ?? 5);
+      refs.seedanceAspectRatio.value = state.seedance_aspect_ratio || "";
+      refs.seedanceGenerateAudio.checked = !!state.seedance_generate_audio;
+      refs.seedanceFixedLens.checked = !!state.seedance_fixed_lens;
+      refs.seedanceGeneratePath.value = state.seedance_generate_path || "";
+      refs.seedanceStatusPath.value = state.seedance_status_path || "";
+      refs.openaiImageApiKey.value = state.openai_image_api_key || "";
+      refs.openaiImageApiBase.value = state.openai_image_api_base || "";
+      refs.openaiImageGeneratePath.value = state.openai_image_generate_path || "";
+      refs.openaiImageEditPath.value = state.openai_image_edit_path || "";
+      refs.openaiImageModel.value = state.openai_image_model || "";
+      refs.defaultImageSize.value = state.default_image_size || "";
+      refs.defaultI2vPrompt.value = state.default_i2v_prompt || "";
+      refs.defaultI2iPrompt.value = state.default_i2i_prompt || "";
+      refs.requestTimeoutSeconds.value = String(state.request_timeout_seconds ?? 90);
+      refs.downloadTimeoutSeconds.value = String(state.download_timeout_seconds ?? 120);
+      refs.requestRetryCount.value = String(state.request_retry_count ?? 1);
+      refs.minRequestIntervalSeconds.value = String(state.min_request_interval_seconds ?? 3);
+      refs.maxImageSizeMb.value = String(state.max_image_size_mb ?? 10);
+      refs.maxVideoSizeMb.value = String(state.max_video_size_mb ?? 100);
+      refs.maxCacheFiles.value = String(state.max_cache_files ?? 20);
+      refs.returnVideoUrl.checked = !!state.return_video_url;
+      refs.returnImageUrl.checked = !!state.return_image_url;
+      refs.attachVideoResult.checked = !!state.attach_video_result;
+      refs.attachImageResult.checked = !!state.attach_image_result;
+      refs.saveVideoLocal.checked = !!state.save_video_local;
+      refs.saveImageLocal.checked = !!state.save_image_local;
       refs.customImageJson.value = state.custom_image_providers_json || "[]";
       refs.customVideoJson.value = state.custom_video_providers_json || "[]";
+      updateCommandPreview();
     }
 
     async function refreshState(silent = false) {
@@ -763,17 +1162,211 @@
       }
     }
 
-    function collectConfigPayload() {
-      return {
+    function collectConfigPayload(forPersist = false) {
+      const payload = {
         selected_image_provider: refs.selectedImage.value.trim(),
         selected_video_provider: refs.selectedVideo.value.trim(),
         webui_host: refs.webuiHost.value.trim(),
         webui_port: refs.webuiPort.value.trim(),
-        webui_auto_start: refs.webuiAutoStart.checked,
+        webui_enabled: refs.webuiEnabled.checked,
+        zhipu_api_key: refs.zhipuApiKey.value.trim(),
+        zhipu_api_base: refs.zhipuApiBase.value.trim(),
+        zhipu_video_model: refs.zhipuVideoModel.value.trim(),
+        zhipu_image_model: refs.zhipuImageModel.value.trim(),
+        zhipu_video_with_audio: refs.zhipuVideoWithAudio.checked,
+        seedance_api_key: refs.seedanceApiKey.value.trim(),
+        seedance_api_base: refs.seedanceApiBase.value.trim(),
+        seedance_video_model: refs.seedanceVideoModel.value.trim(),
+        seedance_resolution: refs.seedanceResolution.value.trim(),
+        seedance_duration: refs.seedanceDuration.value.trim(),
+        seedance_aspect_ratio: refs.seedanceAspectRatio.value.trim(),
+        seedance_generate_audio: refs.seedanceGenerateAudio.checked,
+        seedance_fixed_lens: refs.seedanceFixedLens.checked,
+        seedance_generate_path: refs.seedanceGeneratePath.value.trim(),
+        seedance_status_path: refs.seedanceStatusPath.value.trim(),
+        openai_image_api_key: refs.openaiImageApiKey.value.trim(),
+        openai_image_api_base: refs.openaiImageApiBase.value.trim(),
+        openai_image_generate_path: refs.openaiImageGeneratePath.value.trim(),
+        openai_image_edit_path: refs.openaiImageEditPath.value.trim(),
+        openai_image_model: refs.openaiImageModel.value.trim(),
+        default_image_size: refs.defaultImageSize.value.trim(),
+        default_i2v_prompt: refs.defaultI2vPrompt.value.trim(),
+        default_i2i_prompt: refs.defaultI2iPrompt.value.trim(),
+        request_timeout_seconds: refs.requestTimeoutSeconds.value.trim(),
+        download_timeout_seconds: refs.downloadTimeoutSeconds.value.trim(),
+        request_retry_count: refs.requestRetryCount.value.trim(),
+        min_request_interval_seconds: refs.minRequestIntervalSeconds.value.trim(),
+        max_image_size_mb: refs.maxImageSizeMb.value.trim(),
+        max_video_size_mb: refs.maxVideoSizeMb.value.trim(),
+        max_cache_files: refs.maxCacheFiles.value.trim(),
+        return_video_url: refs.returnVideoUrl.checked,
+        return_image_url: refs.returnImageUrl.checked,
+        attach_video_result: refs.attachVideoResult.checked,
+        attach_image_result: refs.attachImageResult.checked,
+        save_video_local: refs.saveVideoLocal.checked,
+        save_image_local: refs.saveImageLocal.checked,
         custom_image_providers_json: parseJsonTextarea(refs.customImageJson),
         custom_video_providers_json: parseJsonTextarea(refs.customVideoJson),
       };
+      if (!forPersist) {
+        delete payload.webui_enabled;
+      }
+      return payload;
     }
+
+    function updateCommandPreview() {
+      const imageProvider = refs.selectedImage.value.trim() || "<生图供应商>";
+      const videoProvider = refs.selectedVideo.value.trim() || "<视频供应商>";
+      const imagePrompt = refs.imgPrompt.value.trim() || "<提示词>";
+      const imageSize = refs.imgSize.value.trim() || "1024x1024";
+      const videoPrompt = refs.videoPrompt.value.trim() || "<提示词>";
+      const taskId = refs.videoTaskId.value.trim() || "<task_id>";
+      refs.cmdPreview.textContent =
+`/kc供应商
+/kc生图 ${imageSize} ${imagePrompt}
+/kc视频 ${videoPrompt}
+/kc视频查询 ${taskId}
+
+# 你当前设定
+# selected_image_provider=${imageProvider}
+# selected_video_provider=${videoProvider}`;
+    }
+
+    function loadHistory() {
+      try {
+        const raw = localStorage.getItem(STORAGE_KEY);
+        historyItems = raw ? JSON.parse(raw) : [];
+        if (!Array.isArray(historyItems)) {
+          historyItems = [];
+        }
+      } catch (_) {
+        historyItems = [];
+      }
+      renderHistory();
+    }
+
+    function saveHistory() {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(historyItems.slice(0, 40)));
+    }
+
+    function addHistory(item) {
+      const record = {
+        time: new Date().toISOString(),
+        ...item,
+      };
+      historyItems.unshift(record);
+      if (historyItems.length > 40) {
+        historyItems = historyItems.slice(0, 40);
+      }
+      saveHistory();
+      renderHistory();
+    }
+
+    function renderHistory() {
+      if (!historyItems.length) {
+        refs.historyList.innerHTML = '<div class="preview-empty">暂无历史记录。</div>';
+        return;
+      }
+      const html = [];
+      for (const item of historyItems) {
+        const localTime = new Date(item.time).toLocaleString();
+        const taskBtn = item.task_id ? `<button class="btn-secondary" data-task="${escapeHTML(item.task_id)}">填入task_id</button>` : "";
+        html.push(
+          `<div class="history-item">
+            <b>${escapeHTML(item.action || "操作")}</b>
+            <div class="history-meta">
+              时间: ${escapeHTML(localTime)}<br/>
+              状态: ${escapeHTML(item.status || "-")} | 供应商: ${escapeHTML(item.provider || "-")}<br/>
+              ${item.message ? `信息: ${escapeHTML(item.message)}` : ""}
+            </div>
+            <div class="history-actions">${taskBtn}</div>
+          </div>`
+        );
+      }
+      refs.historyList.innerHTML = html.join("");
+    }
+
+    function stopAutoPoll(note = "轮询状态: 已停止") {
+      if (autoPollTimer) {
+        clearInterval(autoPollTimer);
+        autoPollTimer = null;
+      }
+      autoPollBusy = false;
+      refs.pollStatus.textContent = note;
+    }
+
+    function startAutoPoll() {
+      const taskId = refs.videoTaskId.value.trim();
+      if (!taskId) {
+        showToast("请先填写 task_id", true);
+        return;
+      }
+      const interval = Math.max(2, Number.parseInt(refs.pollInterval.value || "5", 10) || 5);
+      autoPollMaxRounds = Math.max(1, Number.parseInt(refs.pollMaxRounds.value || "40", 10) || 40);
+      autoPollRound = 0;
+      stopAutoPoll("轮询状态: 启动中...");
+      refs.pollStatus.textContent = `轮询状态: 运行中 (0/${autoPollMaxRounds})`;
+      autoPollTimer = setInterval(async () => {
+        if (autoPollBusy) {
+          return;
+        }
+        autoPollBusy = true;
+        try {
+          autoPollRound += 1;
+          refs.pollStatus.textContent = `轮询状态: 运行中 (${autoPollRound}/${autoPollMaxRounds})`;
+          const ret = await req("/api/test/video-query", "POST", { task_id: taskId });
+          const data = ret.data || {};
+          addHistory({
+            action: "轮询视频任务",
+            status: data.status || "",
+            provider: data.provider || "",
+            task_id: data.task_id || taskId,
+            message: data.fail_reason || "",
+          });
+          const status = String(data.status || "").toLowerCase();
+          if (["success", "failed", "timeout"].includes(status)) {
+            stopAutoPoll(`轮询状态: 已结束 (${status})`);
+            showToast(`轮询结束: ${status}`);
+          } else if (autoPollRound >= autoPollMaxRounds) {
+            stopAutoPoll("轮询状态: 达到上限，已停止");
+            showToast("轮询达到上限", true);
+          }
+        } catch (err) {
+          stopAutoPoll("轮询状态: 异常中断");
+          showToast(`轮询失败: ${err.message}`, true);
+        } finally {
+          autoPollBusy = false;
+        }
+      }, interval * 1000);
+      showToast("自动轮询已启动");
+    }
+
+    refs.historyList.addEventListener("click", (event) => {
+      const target = event.target.closest("button[data-task]");
+      if (!target) {
+        return;
+      }
+      const taskId = target.getAttribute("data-task") || "";
+      refs.videoTaskId.value = taskId;
+      updateCommandPreview();
+      showToast("已填入 task_id");
+    });
+
+    refs.btnPing.onclick = async () => {
+      const start = performance.now();
+      try {
+        setLoading(true);
+        await req("/api/ping");
+        const cost = Math.max(1, Math.round(performance.now() - start));
+        refs.pillPing.textContent = `延迟: ${cost}ms`;
+        showToast(`健康检查成功 (${cost}ms)`);
+      } catch (err) {
+        refs.pillPing.textContent = "延迟: 失败";
+        showToast(`健康检查失败: ${err.message}`, true);
+      } finally {
+        setLoading(false);
+      }
+    };
 
     refs.btnRefresh.onclick = async () => {
       try {
@@ -797,11 +1390,29 @@
       }
     };
 
+    refs.btnFillImageTpl.onclick = () => {
+      refs.customImageJson.value = JSON.stringify(IMAGE_TEMPLATE, null, 2);
+      refs.customImageJson.classList.remove("bad-input");
+      showToast("已填充生图模板");
+    };
+
+    refs.btnFillVideoTpl.onclick = () => {
+      refs.customVideoJson.value = JSON.stringify(VIDEO_TEMPLATE, null, 2);
+      refs.customVideoJson.classList.remove("bad-input");
+      showToast("已填充视频模板");
+    };
+
     refs.btnApplyConfig.onclick = async () => {
       try {
         setLoading(true);
-        await req("/api/runtime-config", "POST", collectConfigPayload());
+        const ret = await req("/api/runtime-config", "POST", collectConfigPayload(false));
         await refreshState(true);
+        addHistory({
+          action: "应用运行时配置",
+          status: "ok",
+          provider: `${ret.data?.selected_image_provider || "-"} / ${ret.data?.selected_video_provider || "-"}`,
+          message: "未写入配置文件",
+        });
         showToast("运行时配置已应用");
       } catch (err) {
         showToast(`应用失败: ${err.message}`, true);
@@ -813,8 +1424,14 @@
     refs.btnPersistConfig.onclick = async () => {
       try {
         setLoading(true);
-        await req("/api/persist-config", "POST", collectConfigPayload());
+        const ret = await req("/api/persist-config", "POST", collectConfigPayload(true));
         await refreshState(true);
+        addHistory({
+          action: "持久化保存配置",
+          status: "ok",
+          provider: `${ret.data?.selected_image_provider || "-"} / ${ret.data?.selected_video_provider || "-"}`,
+          message: "已写入插件配置",
+        });
         showToast("配置已持久化保存");
       } catch (err) {
         showToast(`保存失败: ${err.message}`, true);
@@ -826,9 +1443,16 @@
     refs.btnTestImage.onclick = async () => {
       try {
         setLoading(true);
-        await req("/api/test/image", "POST", {
+        const ret = await req("/api/test/image", "POST", {
           prompt: refs.imgPrompt.value.trim(),
           size: refs.imgSize.value.trim(),
+        });
+        const data = ret.data || {};
+        addHistory({
+          action: "生图测试",
+          status: data.status || "",
+          provider: data.provider || "",
+          message: `返回 ${data.count || 0} 张`,
         });
         showToast("生图请求已发送");
       } catch (err) {
@@ -844,8 +1468,20 @@
         const ret = await req("/api/test/video", "POST", {
           prompt: refs.videoPrompt.value.trim(),
         });
-        refs.videoTaskId.value = ret.data?.task_id || "";
+        const data = ret.data || {};
+        refs.videoTaskId.value = data.task_id || "";
+        updateCommandPreview();
+        addHistory({
+          action: "提交视频任务",
+          status: data.status || "",
+          provider: data.provider || "",
+          task_id: data.task_id || "",
+          message: "任务已提交",
+        });
         showToast("视频任务已提交");
+        if (refs.autoPollAfterSubmit.checked && data.task_id) {
+          startAutoPoll();
+        }
       } catch (err) {
         showToast(`提交失败: ${err.message}`, true);
       } finally {
@@ -856,8 +1492,16 @@
     refs.btnQueryVideo.onclick = async () => {
       try {
         setLoading(true);
-        await req("/api/test/video-query", "POST", {
+        const ret = await req("/api/test/video-query", "POST", {
           task_id: refs.videoTaskId.value.trim(),
+        });
+        const data = ret.data || {};
+        addHistory({
+          action: "查询视频任务",
+          status: data.status || "",
+          provider: data.provider || "",
+          task_id: data.task_id || refs.videoTaskId.value.trim(),
+          message: data.fail_reason || "",
         });
         showToast("任务状态已更新");
       } catch (err) {
@@ -885,6 +1529,43 @@
       showToast("结果已清空");
     };
 
+    refs.btnStartPoll.onclick = () => {
+      startAutoPoll();
+    };
+
+    refs.btnStopPoll.onclick = () => {
+      stopAutoPoll("轮询状态: 已手动停止");
+      showToast("轮询已停止");
+    };
+
+    refs.btnCopyCmd.onclick = async () => {
+      try {
+        await navigator.clipboard.writeText(refs.cmdPreview.textContent || "");
+        showToast("命令已复制");
+      } catch (_) {
+        showToast("复制失败，请手动复制", true);
+      }
+    };
+
+    refs.btnClearHistory.onclick = () => {
+      historyItems = [];
+      saveHistory();
+      renderHistory();
+      showToast("历史已清空");
+    };
+
+    for (const el of [
+      refs.selectedImage,
+      refs.selectedVideo,
+      refs.imgPrompt,
+      refs.imgSize,
+      refs.videoPrompt,
+      refs.videoTaskId,
+    ]) {
+      el.addEventListener("input", updateCommandPreview);
+    }
+
+    loadHistory();
     refreshState(true).catch((err) => {
       printResult({ ok: false, error: err.message });
       showToast(`初始化失败: ${err.message}`, true);

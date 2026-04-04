@@ -33,8 +33,13 @@
     "hint": "示例: [{\"name\":\"myvideo\",\"api_key\":\"sk-xxx\",\"api_base\":\"https://api.example.com/v1\",\"submit_path\":\"/generate\",\"query_path\":\"/status\",\"task_id_paths\":[\"data.task_id\"],\"status_paths\":[\"data.status\"],\"video_url_paths\":[\"data.url\"]}]",
     "default": "[]"
   },
+  "webui_enabled": {
+    "description": "启用WebUI（开启后按host/port监听）",
+    "type": "bool",
+    "default": false
+  },
   "webui_auto_start": {
-    "description": "插件加载时自动启动WebUI",
+    "description": "兼容旧配置：等同于 webui_enabled",
     "type": "bool",
     "default": false
   },
