@@ -34,7 +34,7 @@ TASK_PROVIDER_KV_PREFIX = "kc_video_task_provider:"
     "astrbot_plugin_kongcheng_ai",
     "GCHkongcheng",
     "多供应商 AI 生图/视频插件",
-    "1.3.0",
+    "1.3.1",
 )
 class KongchengAIVideoPlugin(Star):
     def __init__(self, context: Context, config: AstrBotConfig | None = None):
@@ -69,8 +69,18 @@ class KongchengAIVideoPlugin(Star):
         )
 
         self.normalized_config: dict[str, Any] = {
-            "default_video_provider": str(self.config.get("default_video_provider", "zhipu")).strip(),
-            "default_image_provider": str(self.config.get("default_image_provider", "zhipu")).strip(),
+            "default_video_provider": str(
+                self.config.get(
+                    "selected_video_provider",
+                    self.config.get("default_video_provider", "zhipu"),
+                )
+            ).strip(),
+            "default_image_provider": str(
+                self.config.get(
+                    "selected_image_provider",
+                    self.config.get("default_image_provider", "zhipu"),
+                )
+            ).strip(),
             "zhipu_api_key": str(self.config.get("zhipu_api_key", legacy_api_key)).strip(),
             "zhipu_api_base": zhipu_api_base,
             "zhipu_video_model": str(self.config.get("zhipu_video_model", legacy_video_model)).strip(),
@@ -303,13 +313,27 @@ class KongchengAIVideoPlugin(Star):
             return (rest[0].strip() if rest else "", first.lower())
         return raw, default_size
 
+    @staticmethod
+    def _strip_legacy_provider_prefix(raw: str, aliases: dict[str, str]) -> str:
+        text = (raw or "").strip()
+        if not text:
+            return ""
+        first, *rest = text.split(maxsplit=1)
+        if aliases.get(first.lower()) or aliases.get(first):
+            return rest[0].strip() if rest else ""
+        return text
+
     @filter.command("kc生图")
     async def create_image(self, event: AstrMessageEvent):
         self._reload_config()
-        provider, body = self.router.parse_image_provider(self._extract_command_body(event, "kc生图"))
+        body = self._strip_legacy_provider_prefix(
+            self._extract_command_body(event, "kc生图"),
+            self.router.IMAGE_ALIAS,
+        )
+        provider = self.router.default_image_provider
         prompt, size = self._split_prompt_and_size(body, self.default_image_size)
         if not prompt:
-            yield event.plain_result("用法：/kc生图 [zhipu|openai] [1024x1024] <提示词>")
+            yield event.plain_result("用法：/kc生图 [1024x1024] <提示词>")
             return
         if not IMAGE_SIZE_RE.match(size):
             yield event.plain_result("尺寸格式错误，示例：1024x1024")
@@ -360,7 +384,11 @@ class KongchengAIVideoPlugin(Star):
     @filter.command("kc图生图")
     async def create_i2i(self, event: AstrMessageEvent):
         self._reload_config()
-        provider, body = self.router.parse_image_provider(self._extract_command_body(event, "kc图生图"))
+        body = self._strip_legacy_provider_prefix(
+            self._extract_command_body(event, "kc图生图"),
+            self.router.IMAGE_ALIAS,
+        )
+        provider = self.router.default_image_provider
         prompt, size = self._split_prompt_and_size(body, self.default_image_size)
         prompt = prompt or self.default_i2i_prompt
         if not IMAGE_SIZE_RE.match(size):
@@ -402,9 +430,13 @@ class KongchengAIVideoPlugin(Star):
     @filter.command("kc视频")
     async def create_video(self, event: AstrMessageEvent):
         self._reload_config()
-        provider, prompt = self.router.parse_video_provider(self._extract_command_body(event, "kc视频"))
+        prompt = self._strip_legacy_provider_prefix(
+            self._extract_command_body(event, "kc视频"),
+            self.router.VIDEO_ALIAS,
+        )
+        provider = self.router.default_video_provider
         if not prompt:
-            yield event.plain_result("用法：/kc视频 [zhipu|seedance] <提示词>")
+            yield event.plain_result("用法：/kc视频 <提示词>")
             return
 
         wait = self._check_rate_limit(str(event.get_sender_id()))
@@ -434,7 +466,11 @@ class KongchengAIVideoPlugin(Star):
     @filter.command("kc图生视频")
     async def create_i2v(self, event: AstrMessageEvent):
         self._reload_config()
-        provider, prompt = self.router.parse_video_provider(self._extract_command_body(event, "kc图生视频"))
+        prompt = self._strip_legacy_provider_prefix(
+            self._extract_command_body(event, "kc图生视频"),
+            self.router.VIDEO_ALIAS,
+        )
+        provider = self.router.default_video_provider
         prompt = prompt or self.default_i2v_prompt
 
         wait = self._check_rate_limit(str(event.get_sender_id()))
@@ -461,22 +497,24 @@ class KongchengAIVideoPlugin(Star):
             f"图生视频任务已提交。\n"
             f"- provider: {result.provider}\n"
             f"- task_id: {result.task_id}\n"
-            f"- 查询: /kc视频查询 {result.provider} {result.task_id}"
+            f"- 查询: /kc视频查询 {result.task_id}"
         )
 
     @filter.command("kc视频查询")
     async def query_video(self, event: AstrMessageEvent):
         self._reload_config()
-        raw = self._extract_command_body(event, "kc视频查询")
-        provider, rest = self.router.parse_video_provider(raw, allow_empty_default=True)
-        task_id = rest.split()[0] if provider else (raw.split()[0] if raw else "")
+        raw = self._strip_legacy_provider_prefix(
+            self._extract_command_body(event, "kc视频查询"),
+            self.router.VIDEO_ALIAS,
+        )
+        task_id = raw.split()[0] if raw else ""
 
         if not task_id:
-            yield event.plain_result("用法：/kc视频查询 [zhipu|seedance] <task_id>")
+            yield event.plain_result("用法：/kc视频查询 <task_id>")
             return
 
         try:
-            result = await self.service.query_video(task_id=task_id, provider=provider)
+            result = await self.service.query_video(task_id=task_id)
         except Exception as exc:
             yield event.plain_result(f"查询失败：{self._sanitize_error(str(exc))}")
             return
@@ -526,16 +564,16 @@ class KongchengAIVideoPlugin(Star):
     async def help(self, event: AstrMessageEvent):
         yield event.plain_result(
             "命令：\n"
-            "1. /kc生图 [zhipu|openai] [尺寸] 提示词\n"
-            "2. /kc图生图 [zhipu|openai] [尺寸] [提示词] + 图片\n"
-            "3. /kc视频 [zhipu|seedance] 提示词\n"
-            "4. /kc图生视频 [zhipu|seedance] [提示词] + 图片\n"
-            "5. /kc视频查询 [zhipu|seedance] task_id\n"
+            "1. /kc生图 [尺寸] 提示词\n"
+            "2. /kc图生图 [尺寸] [提示词] + 图片\n"
+            "3. /kc视频 提示词\n"
+            "4. /kc图生视频 [提示词] + 图片\n"
+            "5. /kc视频查询 task_id\n"
             "6. /kc供应商\n\n"
             "示例：\n"
-            "- /kc视频 seedance 一艘飞船穿越云层\n"
-            "- /kc图生视频 doubao 让人物微笑并挥手\n"
-            "- /kc生图 openai 1024x1024 一只机械猫"
+            "- /kc视频 一艘飞船穿越云层\n"
+            "- /kc图生视频 让人物微笑并挥手\n"
+            "- /kc生图 1024x1024 一只机械猫"
         )
 
     @filter.command("kc供应商")
@@ -543,9 +581,10 @@ class KongchengAIVideoPlugin(Star):
         self._reload_config()
         enabled = self.router.enabled_providers()
         text = (
-            f"默认视频供应商: {self.router.default_video_provider}\n"
-            f"默认生图供应商: {self.router.default_image_provider}\n"
+            f"当前视频供应商: {self.router.default_video_provider}\n"
+            f"当前生图供应商: {self.router.default_image_provider}\n"
             f"可用视频供应商: {', '.join(enabled['video']) if enabled['video'] else '无'}\n"
-            f"可用生图供应商: {', '.join(enabled['image']) if enabled['image'] else '无'}"
+            f"可用生图供应商: {', '.join(enabled['image']) if enabled['image'] else '无'}\n"
+            "提示: 只需要配置当前选中的供应商参数。"
         )
         yield event.plain_result(text)

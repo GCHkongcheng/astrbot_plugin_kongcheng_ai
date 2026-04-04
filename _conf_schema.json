@@ -1,12 +1,24 @@
 {
+  "selected_video_provider": {
+    "description": "视频供应商（选择一个）",
+    "type": "string",
+    "options": ["zhipu", "seedance"],
+    "default": "zhipu"
+  },
+  "selected_image_provider": {
+    "description": "生图供应商（选择一个）",
+    "type": "string",
+    "options": ["zhipu", "openai_image"],
+    "default": "zhipu"
+  },
   "default_video_provider": {
-    "description": "默认视频供应商",
+    "description": "兼容旧配置：默认视频供应商",
     "type": "string",
     "options": ["zhipu", "seedance"],
     "default": "zhipu"
   },
   "default_image_provider": {
-    "description": "默认生图供应商",
+    "description": "兼容旧配置：默认生图供应商",
     "type": "string",
     "options": ["zhipu", "openai_image"],
     "default": "zhipu"
