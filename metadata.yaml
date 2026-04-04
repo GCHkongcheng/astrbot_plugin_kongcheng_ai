@@ -1,6 +1,6 @@
 name: astrbot_plugin_kongcheng_ai
 display_name: 空城 AI 视频
 desc: 基于 AstrBot 的多供应商 AI 多媒体插件，支持生图、图生图、文生视频、图生视频与任务查询。
-version: v1.3.1
+version: v1.5.0
 author: GCHkongcheng
 repo: https://github.com/GCHkongcheng/astrbot_plugin_kongcheng_ai

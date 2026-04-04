@@ -1,0 +1,269 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>空城AI WebUI</title>
+  <style>
+    :root {
+      --bg: #f3f6fb;
+      --card: #ffffff;
+      --line: #d8e2ef;
+      --text: #203047;
+      --muted: #5c708f;
+      --brand: #1f7a8c;
+      --brand-2: #2a9d8f;
+      --danger: #c1121f;
+    }
+    body {
+      margin: 0;
+      font-family: "Microsoft YaHei UI", "PingFang SC", sans-serif;
+      background: radial-gradient(circle at 20% 10%, #e7f2ff 0, var(--bg) 45%, #eef7f5 100%);
+      color: var(--text);
+    }
+    .wrap {
+      max-width: 980px;
+      margin: 28px auto;
+      padding: 0 14px 24px;
+    }
+    .head {
+      margin-bottom: 16px;
+    }
+    h1 {
+      margin: 0;
+      font-size: 26px;
+      letter-spacing: 0.5px;
+    }
+    .sub {
+      margin-top: 6px;
+      color: var(--muted);
+      font-size: 14px;
+    }
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 12px;
+    }
+    .card {
+      background: var(--card);
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      padding: 14px;
+      box-shadow: 0 8px 24px rgba(31, 55, 92, 0.06);
+    }
+    .card h2 {
+      margin: 0 0 10px;
+      font-size: 16px;
+    }
+    .row {
+      display: flex;
+      gap: 8px;
+      margin: 8px 0;
+      flex-wrap: wrap;
+    }
+    input, textarea, button {
+      border-radius: 9px;
+      border: 1px solid var(--line);
+      padding: 8px 10px;
+      font-size: 14px;
+      box-sizing: border-box;
+    }
+    input, textarea {
+      width: 100%;
+      background: #fff;
+      color: var(--text);
+    }
+    textarea {
+      min-height: 110px;
+      resize: vertical;
+      font-family: Consolas, "Courier New", monospace;
+      font-size: 13px;
+    }
+    button {
+      cursor: pointer;
+      background: linear-gradient(120deg, var(--brand), var(--brand-2));
+      color: #fff;
+      border: none;
+      min-width: 100px;
+    }
+    button.secondary {
+      background: #edf3fb;
+      color: var(--text);
+      border: 1px solid var(--line);
+    }
+    button.danger {
+      background: var(--danger);
+    }
+    .kv {
+      line-height: 1.7;
+      font-size: 14px;
+    }
+    .kv b {
+      display: inline-block;
+      width: 110px;
+    }
+    pre {
+      margin: 0;
+      white-space: pre-wrap;
+      word-break: break-word;
+      font-size: 12px;
+      background: #0f1c2d;
+      color: #ddedff;
+      border-radius: 10px;
+      padding: 12px;
+      min-height: 160px;
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="head">
+      <h1>空城AI 管理与测试台</h1>
+      <div class="sub">运行时配置 + 持久化保存 + 生图/视频 API 测试</div>
+    </div>
+
+    <div class="grid">
+      <section class="card">
+        <h2>运行状态</h2>
+        <div class="kv" id="stateBox">加载中...</div>
+        <div class="row">
+          <button class="secondary" id="btnRefresh">刷新状态</button>
+        </div>
+      </section>
+
+      <section class="card">
+        <h2>运行时配置</h2>
+        <div class="row"><input id="selectedImage" placeholder="selected_image_provider" /></div>
+        <div class="row"><input id="selectedVideo" placeholder="selected_video_provider" /></div>
+        <div class="row"><input id="webuiHost" placeholder="webui_host" /></div>
+        <div class="row"><input id="webuiPort" placeholder="webui_port" /></div>
+        <div class="row">
+          <label><input type="checkbox" id="webuiAutoStart" style="width:auto;margin-right:6px;" /> webui_auto_start</label>
+        </div>
+        <div class="row"><textarea id="customImageJson" placeholder="custom_image_providers_json"></textarea></div>
+        <div class="row"><textarea id="customVideoJson" placeholder="custom_video_providers_json"></textarea></div>
+        <div class="row">
+          <button id="btnApplyConfig">仅运行时应用</button>
+          <button class="secondary" id="btnPersistConfig">持久化保存</button>
+        </div>
+      </section>
+
+      <section class="card">
+        <h2>生图测试</h2>
+        <div class="row"><input id="imgPrompt" placeholder="提示词" value="一只机械猫，插画风" /></div>
+        <div class="row"><input id="imgSize" placeholder="尺寸" value="1024x1024" /></div>
+        <div class="row"><button id="btnTestImage">测试生图</button></div>
+      </section>
+
+      <section class="card">
+        <h2>视频测试</h2>
+        <div class="row"><input id="videoPrompt" placeholder="提示词" value="一艘飞船穿越云层，电影感" /></div>
+        <div class="row">
+          <button id="btnTestVideo">提交视频任务</button>
+          <button class="secondary" id="btnQueryVideo">查询任务</button>
+        </div>
+        <div class="row"><input id="videoTaskId" placeholder="task_id" /></div>
+      </section>
+    </div>
+
+    <section class="card" style="margin-top:12px;">
+      <h2>接口结果</h2>
+      <pre id="output">等待操作...</pre>
+    </section>
+  </div>
+
+  <script>
+    const output = document.getElementById("output");
+
+    function printResult(data) {
+      output.textContent = JSON.stringify(data, null, 2);
+    }
+
+    async function req(url, method = "GET", body = null) {
+      const res = await fetch(url, {
+        method,
+        headers: { "Content-Type": "application/json" },
+        body: body ? JSON.stringify(body) : null,
+      });
+      const data = await res.json();
+      printResult(data);
+      if (!data.ok) throw new Error(data.error || "request failed");
+      return data;
+    }
+
+    async function refreshState() {
+      const data = await req("/api/state");
+      const s = data.data || {};
+      document.getElementById("stateBox").innerHTML = `
+        <div><b>生图供应商</b>${s.selected_image_provider || ""}</div>
+        <div><b>视频供应商</b>${s.selected_video_provider || ""}</div>
+        <div><b>WebUI地址</b>${s.webui_url || ""}</div>
+        <div><b>AutoStart</b>${s.webui_auto_start ? "true" : "false"}</div>
+        <div><b>可用生图</b>${(s.enabled_image_providers || []).join(", ") || "无"}</div>
+        <div><b>可用视频</b>${(s.enabled_video_providers || []).join(", ") || "无"}</div>
+      `;
+      document.getElementById("selectedImage").value = s.selected_image_provider || "";
+      document.getElementById("selectedVideo").value = s.selected_video_provider || "";
+      document.getElementById("webuiHost").value = s.webui_host || "127.0.0.1";
+      document.getElementById("webuiPort").value = String(s.webui_port || 8765);
+      document.getElementById("webuiAutoStart").checked = !!s.webui_auto_start;
+      document.getElementById("customImageJson").value = s.custom_image_providers_json || "[]";
+      document.getElementById("customVideoJson").value = s.custom_video_providers_json || "[]";
+    }
+
+    document.getElementById("btnRefresh").onclick = () => refreshState().catch(err => printResult({ ok: false, error: err.message }));
+
+    function collectConfigPayload() {
+      return {
+        selected_image_provider: document.getElementById("selectedImage").value.trim(),
+        selected_video_provider: document.getElementById("selectedVideo").value.trim(),
+        webui_host: document.getElementById("webuiHost").value.trim(),
+        webui_port: document.getElementById("webuiPort").value.trim(),
+        webui_auto_start: document.getElementById("webuiAutoStart").checked,
+        custom_image_providers_json: document.getElementById("customImageJson").value,
+        custom_video_providers_json: document.getElementById("customVideoJson").value,
+      };
+    }
+
+    document.getElementById("btnApplyConfig").onclick = async () => {
+      try {
+        await req("/api/runtime-config", "POST", collectConfigPayload());
+        await refreshState();
+      } catch (err) {
+        printResult({ ok: false, error: err.message });
+      }
+    };
+
+    document.getElementById("btnPersistConfig").onclick = async () => {
+      try {
+        await req("/api/persist-config", "POST", collectConfigPayload());
+        await refreshState();
+      } catch (err) {
+        printResult({ ok: false, error: err.message });
+      }
+    };
+
+    document.getElementById("btnTestImage").onclick = () => req("/api/test/image", "POST", {
+      prompt: document.getElementById("imgPrompt").value,
+      size: document.getElementById("imgSize").value,
+    }).catch(err => printResult({ ok: false, error: err.message }));
+
+    document.getElementById("btnTestVideo").onclick = async () => {
+      try {
+        const ret = await req("/api/test/video", "POST", {
+          prompt: document.getElementById("videoPrompt").value,
+        });
+        document.getElementById("videoTaskId").value = ret.data?.task_id || "";
+      } catch (err) {
+        printResult({ ok: false, error: err.message });
+      }
+    };
+
+    document.getElementById("btnQueryVideo").onclick = () => req("/api/test/video-query", "POST", {
+      task_id: document.getElementById("videoTaskId").value.trim(),
+    }).catch(err => printResult({ ok: false, error: err.message }));
+
+    refreshState().catch(err => printResult({ ok: false, error: err.message }));
+  </script>
+</body>
+</html>

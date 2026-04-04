@@ -1,27 +1,53 @@
 {
   "selected_video_provider": {
-    "description": "视频供应商（选择一个）",
+    "description": "视频供应商（可填内置名或自定义名）",
     "type": "string",
-    "options": ["zhipu", "seedance"],
+    "hint": "内置示例：zhipu、seedance；也可填写 custom_video_providers_json 中的 name",
     "default": "zhipu"
   },
   "selected_image_provider": {
-    "description": "生图供应商（选择一个）",
+    "description": "生图供应商（可填内置名或自定义名）",
     "type": "string",
-    "options": ["zhipu", "openai_image"],
+    "hint": "内置示例：zhipu、openai_image；也可填写 custom_image_providers_json 中的 name",
     "default": "zhipu"
   },
   "default_video_provider": {
     "description": "兼容旧配置：默认视频供应商",
     "type": "string",
-    "options": ["zhipu", "seedance"],
     "default": "zhipu"
   },
   "default_image_provider": {
     "description": "兼容旧配置：默认生图供应商",
     "type": "string",
-    "options": ["zhipu", "openai_image"],
     "default": "zhipu"
+  },
+  "custom_image_providers_json": {
+    "description": "自定义生图供应商(JSON数组)",
+    "type": "string",
+    "hint": "示例: [{\"name\":\"myimg\",\"api_key\":\"sk-xxx\",\"api_base\":\"https://api.example.com/v1\",\"generate_path\":\"/images/generations\",\"model\":\"model-name\"}]",
+    "default": "[]"
+  },
+  "custom_video_providers_json": {
+    "description": "自定义视频供应商(JSON数组)",
+    "type": "string",
+    "hint": "示例: [{\"name\":\"myvideo\",\"api_key\":\"sk-xxx\",\"api_base\":\"https://api.example.com/v1\",\"submit_path\":\"/generate\",\"query_path\":\"/status\",\"task_id_paths\":[\"data.task_id\"],\"status_paths\":[\"data.status\"],\"video_url_paths\":[\"data.url\"]}]",
+    "default": "[]"
+  },
+  "webui_auto_start": {
+    "description": "插件加载时自动启动WebUI",
+    "type": "bool",
+    "default": false
+  },
+  "webui_host": {
+    "description": "WebUI监听地址",
+    "type": "string",
+    "hint": "默认 127.0.0.1，仅本机访问；如需局域网访问可改为 0.0.0.0",
+    "default": "127.0.0.1"
+  },
+  "webui_port": {
+    "description": "WebUI端口",
+    "type": "int",
+    "default": 8765
   },
   "zhipu_api_key": {
     "description": "智谱 API Key",

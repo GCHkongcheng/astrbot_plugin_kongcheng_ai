@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import json
 from typing import Any
 
 try:
@@ -9,11 +10,13 @@ except ImportError:
 
 try:
     from ..providers.base import BaseProvider
+    from ..providers.custom import CustomImageProvider, CustomVideoProvider
     from ..providers.openai_image import OpenAIImageProvider
     from ..providers.seedance import SeedanceProvider
     from ..providers.zhipu import ZhipuProvider
 except ImportError:
     from providers.base import BaseProvider
+    from providers.custom import CustomImageProvider, CustomVideoProvider
     from providers.openai_image import OpenAIImageProvider
     from providers.seedance import SeedanceProvider
     from providers.zhipu import ZhipuProvider
@@ -34,6 +37,8 @@ class ProviderRouter:
     }
 
     def __init__(self, request_json, config: dict[str, Any]):
+        self.video_alias = dict(self.VIDEO_ALIAS)
+        self.image_alias = dict(self.IMAGE_ALIAS)
         self.default_video_provider = str(config.get("default_video_provider", "zhipu")).strip()
         self.default_image_provider = str(config.get("default_image_provider", "zhipu")).strip()
 
@@ -74,6 +79,44 @@ class ProviderRouter:
                 },
             ),
         }
+        self._load_custom_providers(request_json, config)
+
+    @staticmethod
+    def _parse_custom_provider_list(raw: Any) -> list[dict[str, Any]]:
+        if isinstance(raw, list):
+            return [item for item in raw if isinstance(item, dict)]
+        if isinstance(raw, str) and raw.strip():
+            try:
+                data = json.loads(raw)
+            except json.JSONDecodeError:
+                return []
+            if isinstance(data, list):
+                return [item for item in data if isinstance(item, dict)]
+        return []
+
+    def _load_custom_providers(self, request_json, config: dict[str, Any]) -> None:
+        image_list = self._parse_custom_provider_list(config.get("custom_image_providers_json", ""))
+        video_list = self._parse_custom_provider_list(config.get("custom_video_providers_json", ""))
+
+        for item in image_list:
+            name = str(item.get("name", "")).strip()
+            if not name:
+                continue
+            if name in self.providers:
+                continue
+            self.providers[name] = CustomImageProvider(request_json, name=name, config=item)
+            self.image_alias[name.lower()] = name
+            self.image_alias[name] = name
+
+        for item in video_list:
+            name = str(item.get("name", "")).strip()
+            if not name:
+                continue
+            if name in self.providers:
+                continue
+            self.providers[name] = CustomVideoProvider(request_json, name=name, config=item)
+            self.video_alias[name.lower()] = name
+            self.video_alias[name] = name
 
     @staticmethod
     def _extract_provider_and_rest(raw: str, aliases: dict[str, str], default_provider: str) -> tuple[str, str]:
@@ -88,10 +131,10 @@ class ProviderRouter:
 
     def parse_video_provider(self, raw: str, allow_empty_default: bool = False) -> tuple[str, str]:
         default_provider = "" if allow_empty_default else self.default_video_provider
-        return self._extract_provider_and_rest(raw, self.VIDEO_ALIAS, default_provider)
+        return self._extract_provider_and_rest(raw, self.video_alias, default_provider)
 
     def parse_image_provider(self, raw: str) -> tuple[str, str]:
-        return self._extract_provider_and_rest(raw, self.IMAGE_ALIAS, self.default_image_provider)
+        return self._extract_provider_and_rest(raw, self.image_alias, self.default_image_provider)
 
     def get_provider(self, provider: str) -> BaseProvider:
         obj = self.providers.get(provider)
