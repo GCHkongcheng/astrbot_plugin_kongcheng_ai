@@ -1,33 +1,144 @@
 {
-  "api_key": {
-    "description": "智谱 AI API Key",
+  "default_video_provider": {
+    "description": "默认视频供应商",
     "type": "string",
-    "hint": "用于调用智谱视频生成接口",
+    "options": ["zhipu", "seedance"],
+    "default": "zhipu"
+  },
+  "default_image_provider": {
+    "description": "默认生图供应商",
+    "type": "string",
+    "options": ["zhipu", "openai_image"],
+    "default": "zhipu"
+  },
+  "zhipu_api_key": {
+    "description": "智谱 API Key",
+    "type": "string",
     "default": "",
     "obvious_hint": true
   },
-  "api_base": {
-    "description": "智谱 OpenAPI Base URL",
+  "zhipu_api_base": {
+    "description": "智谱 API Base",
     "type": "string",
     "hint": "默认 https://open.bigmodel.cn/api/paas/v4",
     "default": "https://open.bigmodel.cn/api/paas/v4"
   },
-  "model": {
-    "description": "视频模型名称",
+  "zhipu_video_model": {
+    "description": "智谱视频模型",
     "type": "string",
-    "hint": "默认使用 CogVideoX-Flash",
     "default": "CogVideoX-Flash"
   },
-  "default_image_prompt": {
+  "zhipu_image_model": {
+    "description": "智谱生图模型",
+    "type": "string",
+    "default": "glm-image"
+  },
+  "zhipu_video_with_audio": {
+    "description": "智谱视频是否带音频",
+    "type": "bool",
+    "default": true
+  },
+  "seedance_api_key": {
+    "description": "Seedance API Key（豆包）",
+    "type": "string",
+    "default": ""
+  },
+  "seedance_api_base": {
+    "description": "Seedance API Base",
+    "type": "string",
+    "hint": "默认 https://seedanceapi.org/v1",
+    "default": "https://seedanceapi.org/v1"
+  },
+  "seedance_generate_path": {
+    "description": "Seedance 提交任务路径",
+    "type": "string",
+    "default": "/generate"
+  },
+  "seedance_status_path": {
+    "description": "Seedance 查询任务路径",
+    "type": "string",
+    "default": "/status"
+  },
+  "seedance_video_model": {
+    "description": "Seedance 视频模型（可选）",
+    "type": "string",
+    "default": ""
+  },
+  "seedance_resolution": {
+    "description": "Seedance 分辨率",
+    "type": "string",
+    "default": "1080p"
+  },
+  "seedance_duration": {
+    "description": "Seedance 时长（秒）",
+    "type": "int",
+    "default": 5
+  },
+  "seedance_aspect_ratio": {
+    "description": "Seedance 画幅比例",
+    "type": "string",
+    "default": "16:9"
+  },
+  "seedance_generate_audio": {
+    "description": "Seedance 是否生成音频",
+    "type": "bool",
+    "default": true
+  },
+  "seedance_fixed_lens": {
+    "description": "Seedance 是否固定镜头",
+    "type": "bool",
+    "default": false
+  },
+  "openai_image_api_key": {
+    "description": "OpenAI兼容生图 API Key",
+    "type": "string",
+    "default": ""
+  },
+  "openai_image_api_base": {
+    "description": "OpenAI兼容生图 API Base",
+    "type": "string",
+    "hint": "例如 https://api.openai.com/v1 或兼容服务地址",
+    "default": ""
+  },
+  "openai_image_generate_path": {
+    "description": "OpenAI兼容生图路径",
+    "type": "string",
+    "default": "/images/generations"
+  },
+  "openai_image_edit_path": {
+    "description": "OpenAI兼容图生图路径（可选）",
+    "type": "string",
+    "default": ""
+  },
+  "openai_image_model": {
+    "description": "OpenAI兼容生图模型",
+    "type": "string",
+    "default": "gpt-image-1"
+  },
+  "default_image_size": {
+    "description": "生图默认尺寸",
+    "type": "string",
+    "default": "1024x1024"
+  },
+  "default_i2v_prompt": {
     "description": "图生视频默认提示词",
     "type": "string",
-    "hint": "当 /kc图生视频 未附带文字提示词时使用",
     "default": "让画面自然地动起来"
   },
+  "default_i2i_prompt": {
+    "description": "图生图默认提示词",
+    "type": "string",
+    "default": "保持主体结构，优化细节和质感"
+  },
   "request_timeout_seconds": {
-    "description": "接口超时时间（秒）",
+    "description": "请求超时时间（秒）",
     "type": "int",
     "default": 90
+  },
+  "request_retry_count": {
+    "description": "请求重试次数",
+    "type": "int",
+    "default": 1
   },
   "download_timeout_seconds": {
     "description": "下载超时时间（秒）",
@@ -37,40 +148,51 @@
   "min_request_interval_seconds": {
     "description": "同一用户最小请求间隔（秒）",
     "type": "float",
-    "hint": "用于防止短时间内频繁提交任务",
     "default": 3
   },
   "max_image_size_mb": {
-    "description": "图生视频最大图片大小（MB）",
+    "description": "最大图片体积（MB）",
     "type": "int",
     "default": 10
   },
   "max_video_size_mb": {
-    "description": "缓存视频最大体积（MB）",
+    "description": "最大视频体积（MB）",
     "type": "int",
     "default": 100
   },
   "save_video_local": {
-    "description": "是否缓存视频到本地",
+    "description": "本地缓存视频",
     "type": "bool",
-    "hint": "开启后会保存到 data/video_cache/astrbot_plugin_kongcheng_ai/",
+    "default": false
+  },
+  "save_image_local": {
+    "description": "本地缓存图片",
+    "type": "bool",
     "default": false
   },
   "return_video_url": {
-    "description": "查询成功时返回视频链接",
+    "description": "返回视频URL",
+    "type": "bool",
+    "default": true
+  },
+  "return_image_url": {
+    "description": "返回图片URL",
     "type": "bool",
     "default": true
   },
   "attach_video_result": {
-    "description": "查询成功时附带视频消息",
+    "description": "附带视频消息",
     "type": "bool",
-    "hint": "依赖平台对视频消息的支持",
+    "default": true
+  },
+  "attach_image_result": {
+    "description": "附带图片消息",
+    "type": "bool",
     "default": true
   },
   "max_cache_files": {
-    "description": "本地缓存最大文件数",
+    "description": "缓存文件数量上限",
     "type": "int",
-    "hint": "超过后自动清理最旧缓存文件",
     "default": 20
   }
 }
