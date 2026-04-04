@@ -6,264 +6,889 @@
   <title>空城AI WebUI</title>
   <style>
     :root {
-      --bg: #f3f6fb;
+      --bg: #f4f8f7;
+      --bg-soft: #e9f3ef;
       --card: #ffffff;
-      --line: #d8e2ef;
-      --text: #203047;
-      --muted: #5c708f;
-      --brand: #1f7a8c;
-      --brand-2: #2a9d8f;
-      --danger: #c1121f;
+      --line: #d2dfda;
+      --text: #213336;
+      --muted: #5f767b;
+      --brand: #0f766e;
+      --brand-2: #16a085;
+      --accent: #d97706;
+      --danger: #be123c;
+      --ok: #15803d;
+      --shadow: 0 12px 32px rgba(16, 48, 52, 0.08);
     }
+
+    * {
+      box-sizing: border-box;
+    }
+
     body {
       margin: 0;
-      font-family: "Microsoft YaHei UI", "PingFang SC", sans-serif;
-      background: radial-gradient(circle at 20% 10%, #e7f2ff 0, var(--bg) 45%, #eef7f5 100%);
       color: var(--text);
+      background:
+        radial-gradient(circle at 12% -8%, #dff2ff 0, transparent 40%),
+        radial-gradient(circle at 95% 20%, #e7f7ea 0, transparent 35%),
+        linear-gradient(180deg, #f8fbfa 0%, var(--bg) 100%);
+      font-family: "Segoe UI", "PingFang SC", "Noto Sans SC", "Microsoft YaHei UI", sans-serif;
     }
+
     .wrap {
-      max-width: 980px;
-      margin: 28px auto;
-      padding: 0 14px 24px;
+      max-width: 1160px;
+      margin: 0 auto;
+      padding: 18px 14px 24px;
     }
-    .head {
-      margin-bottom: 16px;
+
+    .hero {
+      background: linear-gradient(135deg, #0f766e, #199f88 72%);
+      color: #ffffff;
+      border-radius: 18px;
+      padding: 18px 18px 14px;
+      box-shadow: var(--shadow);
+      position: relative;
+      overflow: hidden;
     }
-    h1 {
+
+    .hero::after {
+      content: "";
+      position: absolute;
+      width: 280px;
+      height: 280px;
+      border-radius: 50%;
+      right: -100px;
+      top: -150px;
+      background: rgba(255, 255, 255, 0.16);
+      pointer-events: none;
+    }
+
+    .hero h1 {
       margin: 0;
-      font-size: 26px;
-      letter-spacing: 0.5px;
+      font-size: 28px;
+      letter-spacing: 0.8px;
+      font-weight: 700;
+      position: relative;
+      z-index: 1;
     }
-    .sub {
+
+    .hero .sub {
       margin-top: 6px;
-      color: var(--muted);
-      font-size: 14px;
+      font-size: 13px;
+      opacity: 0.94;
+      position: relative;
+      z-index: 1;
     }
-    .grid {
+
+    .hero-kpis {
+      margin-top: 12px;
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      position: relative;
+      z-index: 1;
+    }
+
+    .pill {
+      border-radius: 999px;
+      padding: 4px 10px;
+      font-size: 12px;
+      border: 1px solid rgba(255, 255, 255, 0.4);
+      background: rgba(255, 255, 255, 0.16);
+      backdrop-filter: blur(2px);
+      white-space: nowrap;
+    }
+
+    .status-ok {
+      color: #ecfdf5;
+      border-color: rgba(209, 250, 229, 0.7);
+      background: rgba(20, 120, 70, 0.35);
+    }
+
+    .status-off {
+      color: #fef3c7;
+      border-color: rgba(253, 224, 71, 0.55);
+      background: rgba(120, 113, 18, 0.35);
+    }
+
+    .layout {
+      margin-top: 12px;
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      grid-template-columns: 1.15fr 0.85fr;
+      gap: 12px;
+      align-items: start;
+    }
+
+    .col {
+      display: grid;
       gap: 12px;
     }
+
     .card {
       background: var(--card);
       border: 1px solid var(--line);
-      border-radius: 12px;
+      border-radius: 14px;
       padding: 14px;
-      box-shadow: 0 8px 24px rgba(31, 55, 92, 0.06);
+      box-shadow: var(--shadow);
     }
+
     .card h2 {
-      margin: 0 0 10px;
+      margin: 0;
       font-size: 16px;
+      line-height: 1.2;
     }
-    .row {
+
+    .card-head {
       display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 10px;
       gap: 8px;
-      margin: 8px 0;
-      flex-wrap: wrap;
     }
-    input, textarea, button {
-      border-radius: 9px;
-      border: 1px solid var(--line);
-      padding: 8px 10px;
+
+    .tip {
+      font-size: 12px;
+      color: var(--muted);
+    }
+
+    .grid-2 {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+    }
+
+    label.field {
+      display: block;
+      margin-top: 8px;
+    }
+
+    label.field > span {
+      display: block;
+      font-size: 12px;
+      color: var(--muted);
+      margin-bottom: 4px;
+    }
+
+    input,
+    textarea,
+    button {
+      border-radius: 10px;
       font-size: 14px;
-      box-sizing: border-box;
+      border: 1px solid var(--line);
     }
-    input, textarea {
+
+    input,
+    textarea {
       width: 100%;
-      background: #fff;
+      padding: 9px 10px;
       color: var(--text);
+      background: #ffffff;
+      outline: none;
+      transition: border-color 0.16s ease, box-shadow 0.16s ease;
     }
+
+    input:focus,
+    textarea:focus {
+      border-color: #6fbfb4;
+      box-shadow: 0 0 0 3px rgba(111, 191, 180, 0.2);
+    }
+
     textarea {
       min-height: 110px;
       resize: vertical;
       font-family: Consolas, "Courier New", monospace;
-      font-size: 13px;
+      font-size: 12.5px;
+      line-height: 1.45;
     }
+
+    .bad-input {
+      border-color: #ef4444;
+      box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.16);
+    }
+
+    .toggle {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 13px;
+      color: var(--text);
+      margin-top: 10px;
+      user-select: none;
+    }
+
+    .toggle input {
+      width: auto;
+      margin: 0;
+    }
+
+    .actions {
+      margin-top: 10px;
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
     button {
       cursor: pointer;
-      background: linear-gradient(120deg, var(--brand), var(--brand-2));
-      color: #fff;
       border: none;
-      min-width: 100px;
+      padding: 9px 12px;
+      min-width: 118px;
+      color: #ffffff;
+      background: linear-gradient(120deg, var(--brand), var(--brand-2));
+      transition: transform 0.12s ease, filter 0.12s ease, opacity 0.12s ease;
     }
-    button.secondary {
-      background: #edf3fb;
+
+    button:hover {
+      transform: translateY(-1px);
+      filter: brightness(1.03);
+    }
+
+    button:disabled {
+      opacity: 0.65;
+      cursor: not-allowed;
+      transform: none;
+      filter: none;
+    }
+
+    .btn-secondary {
+      background: #ebf4f2;
       color: var(--text);
       border: 1px solid var(--line);
     }
-    button.danger {
-      background: var(--danger);
+
+    .btn-warn {
+      background: linear-gradient(120deg, #b45309, var(--accent));
     }
-    .kv {
-      line-height: 1.7;
-      font-size: 14px;
+
+    .status-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 7px;
     }
-    .kv b {
-      display: inline-block;
-      width: 110px;
+
+    .status-item {
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      padding: 8px;
+      background: linear-gradient(180deg, #ffffff, #f8fbfa);
     }
-    pre {
+
+    .status-item b {
+      display: block;
+      font-size: 12px;
+      color: var(--muted);
+      margin-bottom: 2px;
+      font-weight: 600;
+    }
+
+    .status-item span {
+      display: block;
+      font-size: 13px;
+      word-break: break-all;
+    }
+
+    .tags {
+      margin-top: 8px;
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
+    }
+
+    .tag {
+      border-radius: 999px;
+      border: 1px solid #c7d8d3;
+      background: #f3f9f7;
+      color: #335c59;
+      padding: 2px 9px;
+      font-size: 12px;
+    }
+
+    .result-tools {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin-bottom: 8px;
+    }
+
+    .result-body {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 10px;
+    }
+
+    .output {
       margin: 0;
+      min-height: 170px;
+      background: #102129;
+      color: #d7f8ef;
+      border-radius: 11px;
+      border: 1px solid #254451;
+      padding: 11px;
+      overflow: auto;
       white-space: pre-wrap;
       word-break: break-word;
       font-size: 12px;
-      background: #0f1c2d;
-      color: #ddedff;
+      line-height: 1.42;
+      font-family: Consolas, "Courier New", monospace;
+    }
+
+    .preview-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(168px, 1fr));
+      gap: 8px;
+    }
+
+    .preview-card {
+      border: 1px solid var(--line);
       border-radius: 10px;
-      padding: 12px;
-      min-height: 160px;
+      padding: 8px;
+      background: #fcfefd;
+    }
+
+    .preview-card img {
+      width: 100%;
+      aspect-ratio: 1 / 1;
+      object-fit: cover;
+      border-radius: 8px;
+      border: 1px solid #d8e8e2;
+      display: block;
+    }
+
+    .preview-card a {
+      display: inline-block;
+      margin-top: 6px;
+      font-size: 12px;
+      color: #0f766e;
+      text-decoration: none;
+      word-break: break-all;
+    }
+
+    .preview-empty {
+      color: var(--muted);
+      font-size: 13px;
+      border: 1px dashed var(--line);
+      border-radius: 10px;
+      padding: 10px;
+      background: #f8fcfb;
+    }
+
+    .footer-note {
+      margin-top: 10px;
+      font-size: 12px;
+      color: var(--muted);
+    }
+
+    .toast {
+      position: fixed;
+      right: 14px;
+      bottom: 14px;
+      padding: 10px 12px;
+      border-radius: 10px;
+      font-size: 13px;
+      color: #f8fffd;
+      background: rgba(10, 70, 61, 0.93);
+      box-shadow: 0 10px 28px rgba(0, 0, 0, 0.2);
+      border: 1px solid rgba(202, 255, 240, 0.25);
+      opacity: 0;
+      pointer-events: none;
+      transform: translateY(10px);
+      transition: opacity 0.2s ease, transform 0.2s ease;
+      z-index: 1000;
+      max-width: min(88vw, 400px);
+    }
+
+    .toast.show {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    .toast.err {
+      background: rgba(123, 18, 52, 0.94);
+      border-color: rgba(251, 191, 210, 0.35);
+    }
+
+    @media (max-width: 980px) {
+      .layout {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    @media (max-width: 720px) {
+      .grid-2 {
+        grid-template-columns: 1fr;
+      }
+
+      button {
+        width: 100%;
+      }
+
+      .hero h1 {
+        font-size: 24px;
+      }
     }
   </style>
 </head>
 <body>
   <div class="wrap">
-    <div class="head">
-      <h1>空城AI 管理与测试台</h1>
-      <div class="sub">运行时配置 + 持久化保存 + 生图/视频 API 测试</div>
-    </div>
+    <section class="hero">
+      <h1>空城AI 配置与联调台</h1>
+      <div class="sub">同页完成供应商切换、配置保存、生图/视频任务联调与结果预览</div>
+      <div class="hero-kpis">
+        <span class="pill" id="pillRunning">WebUI 未就绪</span>
+        <span class="pill" id="pillImageProvider">生图: -</span>
+        <span class="pill" id="pillVideoProvider">视频: -</span>
+      </div>
+    </section>
 
-    <div class="grid">
-      <section class="card">
-        <h2>运行状态</h2>
-        <div class="kv" id="stateBox">加载中...</div>
-        <div class="row">
-          <button class="secondary" id="btnRefresh">刷新状态</button>
+    <section class="layout">
+      <div class="col">
+        <section class="card">
+          <div class="card-head">
+            <h2>运行状态</h2>
+            <button class="btn-secondary" id="btnRefresh">刷新状态</button>
+          </div>
+          <div class="status-grid" id="stateGrid">
+            <div class="status-item"><b>状态</b><span>加载中</span></div>
+          </div>
+          <div class="tags" id="providerTags"></div>
+        </section>
+
+        <section class="card">
+          <div class="card-head">
+            <h2>配置管理</h2>
+            <span class="tip">支持运行时应用与持久化保存</span>
+          </div>
+          <div class="grid-2">
+            <label class="field">
+              <span>selected_image_provider</span>
+              <input id="selectedImage" placeholder="如 zhipu / openai_image / 自定义name" />
+            </label>
+            <label class="field">
+              <span>selected_video_provider</span>
+              <input id="selectedVideo" placeholder="如 zhipu / seedance / 自定义name" />
+            </label>
+          </div>
+          <div class="grid-2">
+            <label class="field">
+              <span>webui_host</span>
+              <input id="webuiHost" placeholder="127.0.0.1 或 0.0.0.0" />
+            </label>
+            <label class="field">
+              <span>webui_port</span>
+              <input id="webuiPort" placeholder="8765" />
+            </label>
+          </div>
+          <label class="toggle">
+            <input type="checkbox" id="webuiAutoStart" />
+            webui_auto_start
+          </label>
+
+          <label class="field">
+            <span>custom_image_providers_json</span>
+            <textarea id="customImageJson" placeholder='[{"name":"myimg","api_key":"sk-xxx","api_base":"https://api.example.com/v1"}]'></textarea>
+          </label>
+          <label class="field">
+            <span>custom_video_providers_json</span>
+            <textarea id="customVideoJson" placeholder='[{"name":"myvideo","api_key":"sk-xxx","api_base":"https://api.example.com/v1"}]'></textarea>
+          </label>
+
+          <div class="actions">
+            <button id="btnApplyConfig">仅运行时应用</button>
+            <button class="btn-secondary" id="btnPersistConfig">持久化保存</button>
+            <button class="btn-secondary" id="btnFormatJson">格式化 JSON</button>
+          </div>
+          <div class="footer-note">持久化保存会写入插件配置；若 host/port 变化，WebUI 可能短暂重启。</div>
+        </section>
+      </div>
+
+      <div class="col">
+        <section class="card">
+          <div class="card-head">
+            <h2>生图测试</h2>
+            <span class="tip">文本 -> 图片</span>
+          </div>
+          <label class="field">
+            <span>prompt</span>
+            <input id="imgPrompt" value="一只机械猫，插画风，高清细节" />
+          </label>
+          <label class="field">
+            <span>size</span>
+            <input id="imgSize" value="1024x1024" />
+          </label>
+          <div class="actions">
+            <button id="btnTestImage">测试生图</button>
+          </div>
+        </section>
+
+        <section class="card">
+          <div class="card-head">
+            <h2>视频测试</h2>
+            <span class="tip">提交与查询</span>
+          </div>
+          <label class="field">
+            <span>prompt</span>
+            <input id="videoPrompt" value="一艘飞船穿越云层，电影感镜头，光影流动" />
+          </label>
+          <div class="actions">
+            <button id="btnTestVideo">提交视频任务</button>
+            <button class="btn-secondary" id="btnQueryVideo">查询任务</button>
+          </div>
+          <label class="field">
+            <span>task_id</span>
+            <input id="videoTaskId" placeholder="提交后自动回填 task_id" />
+          </label>
+        </section>
+      </div>
+    </section>
+
+    <section class="card" style="margin-top: 12px;">
+      <div class="card-head">
+        <h2>接口结果</h2>
+        <div class="result-tools">
+          <button class="btn-secondary" id="btnCopyResult">复制 JSON</button>
+          <button class="btn-secondary" id="btnClearResult">清空</button>
         </div>
-      </section>
-
-      <section class="card">
-        <h2>运行时配置</h2>
-        <div class="row"><input id="selectedImage" placeholder="selected_image_provider" /></div>
-        <div class="row"><input id="selectedVideo" placeholder="selected_video_provider" /></div>
-        <div class="row"><input id="webuiHost" placeholder="webui_host" /></div>
-        <div class="row"><input id="webuiPort" placeholder="webui_port" /></div>
-        <div class="row">
-          <label><input type="checkbox" id="webuiAutoStart" style="width:auto;margin-right:6px;" /> webui_auto_start</label>
-        </div>
-        <div class="row"><textarea id="customImageJson" placeholder="custom_image_providers_json"></textarea></div>
-        <div class="row"><textarea id="customVideoJson" placeholder="custom_video_providers_json"></textarea></div>
-        <div class="row">
-          <button id="btnApplyConfig">仅运行时应用</button>
-          <button class="secondary" id="btnPersistConfig">持久化保存</button>
-        </div>
-      </section>
-
-      <section class="card">
-        <h2>生图测试</h2>
-        <div class="row"><input id="imgPrompt" placeholder="提示词" value="一只机械猫，插画风" /></div>
-        <div class="row"><input id="imgSize" placeholder="尺寸" value="1024x1024" /></div>
-        <div class="row"><button id="btnTestImage">测试生图</button></div>
-      </section>
-
-      <section class="card">
-        <h2>视频测试</h2>
-        <div class="row"><input id="videoPrompt" placeholder="提示词" value="一艘飞船穿越云层，电影感" /></div>
-        <div class="row">
-          <button id="btnTestVideo">提交视频任务</button>
-          <button class="secondary" id="btnQueryVideo">查询任务</button>
-        </div>
-        <div class="row"><input id="videoTaskId" placeholder="task_id" /></div>
-      </section>
-    </div>
-
-    <section class="card" style="margin-top:12px;">
-      <h2>接口结果</h2>
-      <pre id="output">等待操作...</pre>
+      </div>
+      <div class="result-body">
+        <pre class="output" id="output">等待操作...</pre>
+        <div id="previewArea" class="preview-empty">暂时没有可预览的图片/视频链接。</div>
+      </div>
     </section>
   </div>
 
+  <div class="toast" id="toast"></div>
+
   <script>
-    const output = document.getElementById("output");
+    const refs = {
+      output: document.getElementById("output"),
+      previewArea: document.getElementById("previewArea"),
+      toast: document.getElementById("toast"),
+      stateGrid: document.getElementById("stateGrid"),
+      providerTags: document.getElementById("providerTags"),
+      pillRunning: document.getElementById("pillRunning"),
+      pillImageProvider: document.getElementById("pillImageProvider"),
+      pillVideoProvider: document.getElementById("pillVideoProvider"),
+      selectedImage: document.getElementById("selectedImage"),
+      selectedVideo: document.getElementById("selectedVideo"),
+      webuiHost: document.getElementById("webuiHost"),
+      webuiPort: document.getElementById("webuiPort"),
+      webuiAutoStart: document.getElementById("webuiAutoStart"),
+      customImageJson: document.getElementById("customImageJson"),
+      customVideoJson: document.getElementById("customVideoJson"),
+      imgPrompt: document.getElementById("imgPrompt"),
+      imgSize: document.getElementById("imgSize"),
+      videoPrompt: document.getElementById("videoPrompt"),
+      videoTaskId: document.getElementById("videoTaskId"),
+      btnRefresh: document.getElementById("btnRefresh"),
+      btnApplyConfig: document.getElementById("btnApplyConfig"),
+      btnPersistConfig: document.getElementById("btnPersistConfig"),
+      btnFormatJson: document.getElementById("btnFormatJson"),
+      btnTestImage: document.getElementById("btnTestImage"),
+      btnTestVideo: document.getElementById("btnTestVideo"),
+      btnQueryVideo: document.getElementById("btnQueryVideo"),
+      btnCopyResult: document.getElementById("btnCopyResult"),
+      btnClearResult: document.getElementById("btnClearResult"),
+    };
+
+    let lastResult = null;
+
+    function showToast(message, isError = false) {
+      refs.toast.textContent = message;
+      refs.toast.className = `toast show${isError ? " err" : ""}`;
+      window.clearTimeout(showToast._timer);
+      showToast._timer = window.setTimeout(() => {
+        refs.toast.className = "toast";
+      }, 2200);
+    }
+
+    function escapeHTML(value) {
+      return String(value ?? "")
+        .replaceAll("&", "&amp;")
+        .replaceAll("<", "&lt;")
+        .replaceAll(">", "&gt;")
+        .replaceAll("\"", "&quot;")
+        .replaceAll("'", "&#39;");
+    }
+
+    function setLoading(loading) {
+      const buttons = [
+        refs.btnRefresh,
+        refs.btnApplyConfig,
+        refs.btnPersistConfig,
+        refs.btnFormatJson,
+        refs.btnTestImage,
+        refs.btnTestVideo,
+        refs.btnQueryVideo,
+      ];
+      for (const btn of buttons) {
+        btn.disabled = loading;
+      }
+    }
 
     function printResult(data) {
-      output.textContent = JSON.stringify(data, null, 2);
+      lastResult = data;
+      refs.output.textContent = JSON.stringify(data, null, 2);
+      renderPreview(data);
+    }
+
+    function renderPreview(data) {
+      const urls = [];
+      const videoLinks = [];
+      const payload = data?.data || {};
+
+      if (Array.isArray(payload.urls)) {
+        for (const link of payload.urls) {
+          if (typeof link === "string" && link.trim()) {
+            urls.push(link.trim());
+          }
+        }
+      }
+
+      if (typeof payload.video_url === "string" && payload.video_url.trim()) {
+        videoLinks.push(payload.video_url.trim());
+      }
+
+      if (!urls.length && !videoLinks.length) {
+        refs.previewArea.className = "preview-empty";
+        refs.previewArea.textContent = "暂时没有可预览的图片/视频链接。";
+        return;
+      }
+
+      const parts = [];
+      parts.push('<div class="preview-grid">');
+      for (const link of urls) {
+        const safe = escapeHTML(link);
+        parts.push(
+          `<div class="preview-card"><img src="${safe}" alt="image preview" /><a href="${safe}" target="_blank" rel="noopener noreferrer">打开图片链接</a></div>`
+        );
+      }
+      for (const link of videoLinks) {
+        const safe = escapeHTML(link);
+        parts.push(
+          `<div class="preview-card"><div style="font-size:13px;color:#355c5a;">视频链接</div><a href="${safe}" target="_blank" rel="noopener noreferrer">${safe}</a></div>`
+        );
+      }
+      parts.push("</div>");
+      refs.previewArea.className = "";
+      refs.previewArea.innerHTML = parts.join("");
     }
 
     async function req(url, method = "GET", body = null) {
-      const res = await fetch(url, {
+      const options = {
         method,
         headers: { "Content-Type": "application/json" },
-        body: body ? JSON.stringify(body) : null,
-      });
-      const data = await res.json();
+      };
+      if (body !== null) {
+        options.body = JSON.stringify(body);
+      }
+      const res = await fetch(url, options);
+      const raw = await res.text();
+      let data = null;
+      try {
+        data = raw ? JSON.parse(raw) : {};
+      } catch (_) {
+        data = { ok: false, error: raw || "响应不是有效JSON" };
+      }
       printResult(data);
-      if (!data.ok) throw new Error(data.error || "request failed");
+      if (!res.ok || !data.ok) {
+        throw new Error(data.error || `HTTP ${res.status}`);
+      }
       return data;
     }
 
-    async function refreshState() {
-      const data = await req("/api/state");
-      const s = data.data || {};
-      document.getElementById("stateBox").innerHTML = `
-        <div><b>生图供应商</b>${s.selected_image_provider || ""}</div>
-        <div><b>视频供应商</b>${s.selected_video_provider || ""}</div>
-        <div><b>WebUI地址</b>${s.webui_url || ""}</div>
-        <div><b>AutoStart</b>${s.webui_auto_start ? "true" : "false"}</div>
-        <div><b>可用生图</b>${(s.enabled_image_providers || []).join(", ") || "无"}</div>
-        <div><b>可用视频</b>${(s.enabled_video_providers || []).join(", ") || "无"}</div>
+    function renderState(state) {
+      const enabledImages = Array.isArray(state.enabled_image_providers) ? state.enabled_image_providers : [];
+      const enabledVideos = Array.isArray(state.enabled_video_providers) ? state.enabled_video_providers : [];
+
+      refs.pillRunning.textContent = state.webui_running ? "WebUI 运行中" : "WebUI 未运行";
+      refs.pillRunning.className = `pill ${state.webui_running ? "status-ok" : "status-off"}`;
+      refs.pillImageProvider.textContent = `生图: ${state.selected_image_provider || "-"}`;
+      refs.pillVideoProvider.textContent = `视频: ${state.selected_video_provider || "-"}`;
+
+      refs.stateGrid.innerHTML = `
+        <div class="status-item"><b>WebUI地址</b><span>${escapeHTML(state.webui_url || "-")}</span></div>
+        <div class="status-item"><b>AutoStart</b><span>${state.webui_auto_start ? "true" : "false"}</span></div>
+        <div class="status-item"><b>生图供应商</b><span>${escapeHTML(state.selected_image_provider || "-")}</span></div>
+        <div class="status-item"><b>视频供应商</b><span>${escapeHTML(state.selected_video_provider || "-")}</span></div>
+        <div class="status-item"><b>webui_host</b><span>${escapeHTML(state.webui_host || "-")}</span></div>
+        <div class="status-item"><b>webui_port</b><span>${escapeHTML(String(state.webui_port || "-"))}</span></div>
       `;
-      document.getElementById("selectedImage").value = s.selected_image_provider || "";
-      document.getElementById("selectedVideo").value = s.selected_video_provider || "";
-      document.getElementById("webuiHost").value = s.webui_host || "127.0.0.1";
-      document.getElementById("webuiPort").value = String(s.webui_port || 8765);
-      document.getElementById("webuiAutoStart").checked = !!s.webui_auto_start;
-      document.getElementById("customImageJson").value = s.custom_image_providers_json || "[]";
-      document.getElementById("customVideoJson").value = s.custom_video_providers_json || "[]";
+
+      const tags = [];
+      for (const name of enabledImages) {
+        tags.push(`<span class="tag">生图: ${escapeHTML(name)}</span>`);
+      }
+      for (const name of enabledVideos) {
+        tags.push(`<span class="tag">视频: ${escapeHTML(name)}</span>`);
+      }
+      refs.providerTags.innerHTML = tags.length ? tags.join("") : '<span class="tag">暂无可用供应商</span>';
     }
 
-    document.getElementById("btnRefresh").onclick = () => refreshState().catch(err => printResult({ ok: false, error: err.message }));
+    function fillForm(state) {
+      refs.selectedImage.value = state.selected_image_provider || "";
+      refs.selectedVideo.value = state.selected_video_provider || "";
+      refs.webuiHost.value = state.webui_host || "127.0.0.1";
+      refs.webuiPort.value = String(state.webui_port || 8765);
+      refs.webuiAutoStart.checked = !!state.webui_auto_start;
+      refs.customImageJson.value = state.custom_image_providers_json || "[]";
+      refs.customVideoJson.value = state.custom_video_providers_json || "[]";
+    }
+
+    async function refreshState(silent = false) {
+      try {
+        setLoading(true);
+        const data = await req("/api/state");
+        const state = data.data || {};
+        renderState(state);
+        fillForm(state);
+        if (!silent) {
+          showToast("状态已刷新");
+        }
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    function parseJsonTextarea(el) {
+      const raw = String(el.value || "").trim() || "[]";
+      try {
+        const parsed = JSON.parse(raw);
+        if (!Array.isArray(parsed)) {
+          throw new Error("需要 JSON 数组");
+        }
+        el.classList.remove("bad-input");
+        return JSON.stringify(parsed);
+      } catch (err) {
+        el.classList.add("bad-input");
+        throw new Error(err.message || "JSON 格式错误");
+      }
+    }
 
     function collectConfigPayload() {
       return {
-        selected_image_provider: document.getElementById("selectedImage").value.trim(),
-        selected_video_provider: document.getElementById("selectedVideo").value.trim(),
-        webui_host: document.getElementById("webuiHost").value.trim(),
-        webui_port: document.getElementById("webuiPort").value.trim(),
-        webui_auto_start: document.getElementById("webuiAutoStart").checked,
-        custom_image_providers_json: document.getElementById("customImageJson").value,
-        custom_video_providers_json: document.getElementById("customVideoJson").value,
+        selected_image_provider: refs.selectedImage.value.trim(),
+        selected_video_provider: refs.selectedVideo.value.trim(),
+        webui_host: refs.webuiHost.value.trim(),
+        webui_port: refs.webuiPort.value.trim(),
+        webui_auto_start: refs.webuiAutoStart.checked,
+        custom_image_providers_json: parseJsonTextarea(refs.customImageJson),
+        custom_video_providers_json: parseJsonTextarea(refs.customVideoJson),
       };
     }
 
-    document.getElementById("btnApplyConfig").onclick = async () => {
+    refs.btnRefresh.onclick = async () => {
       try {
+        await refreshState();
+      } catch (err) {
+        showToast(`刷新失败: ${err.message}`, true);
+      }
+    };
+
+    refs.btnFormatJson.onclick = () => {
+      try {
+        const img = JSON.parse(String(refs.customImageJson.value || "").trim() || "[]");
+        const vid = JSON.parse(String(refs.customVideoJson.value || "").trim() || "[]");
+        refs.customImageJson.value = JSON.stringify(img, null, 2);
+        refs.customVideoJson.value = JSON.stringify(vid, null, 2);
+        refs.customImageJson.classList.remove("bad-input");
+        refs.customVideoJson.classList.remove("bad-input");
+        showToast("JSON 已格式化");
+      } catch (err) {
+        showToast(`JSON 格式化失败: ${err.message}`, true);
+      }
+    };
+
+    refs.btnApplyConfig.onclick = async () => {
+      try {
+        setLoading(true);
         await req("/api/runtime-config", "POST", collectConfigPayload());
-        await refreshState();
+        await refreshState(true);
+        showToast("运行时配置已应用");
       } catch (err) {
-        printResult({ ok: false, error: err.message });
+        showToast(`应用失败: ${err.message}`, true);
+      } finally {
+        setLoading(false);
       }
     };
 
-    document.getElementById("btnPersistConfig").onclick = async () => {
+    refs.btnPersistConfig.onclick = async () => {
       try {
+        setLoading(true);
         await req("/api/persist-config", "POST", collectConfigPayload());
-        await refreshState();
+        await refreshState(true);
+        showToast("配置已持久化保存");
       } catch (err) {
-        printResult({ ok: false, error: err.message });
+        showToast(`保存失败: ${err.message}`, true);
+      } finally {
+        setLoading(false);
       }
     };
 
-    document.getElementById("btnTestImage").onclick = () => req("/api/test/image", "POST", {
-      prompt: document.getElementById("imgPrompt").value,
-      size: document.getElementById("imgSize").value,
-    }).catch(err => printResult({ ok: false, error: err.message }));
-
-    document.getElementById("btnTestVideo").onclick = async () => {
+    refs.btnTestImage.onclick = async () => {
       try {
-        const ret = await req("/api/test/video", "POST", {
-          prompt: document.getElementById("videoPrompt").value,
+        setLoading(true);
+        await req("/api/test/image", "POST", {
+          prompt: refs.imgPrompt.value.trim(),
+          size: refs.imgSize.value.trim(),
         });
-        document.getElementById("videoTaskId").value = ret.data?.task_id || "";
+        showToast("生图请求已发送");
       } catch (err) {
-        printResult({ ok: false, error: err.message });
+        showToast(`生图失败: ${err.message}`, true);
+      } finally {
+        setLoading(false);
       }
     };
 
-    document.getElementById("btnQueryVideo").onclick = () => req("/api/test/video-query", "POST", {
-      task_id: document.getElementById("videoTaskId").value.trim(),
-    }).catch(err => printResult({ ok: false, error: err.message }));
+    refs.btnTestVideo.onclick = async () => {
+      try {
+        setLoading(true);
+        const ret = await req("/api/test/video", "POST", {
+          prompt: refs.videoPrompt.value.trim(),
+        });
+        refs.videoTaskId.value = ret.data?.task_id || "";
+        showToast("视频任务已提交");
+      } catch (err) {
+        showToast(`提交失败: ${err.message}`, true);
+      } finally {
+        setLoading(false);
+      }
+    };
 
-    refreshState().catch(err => printResult({ ok: false, error: err.message }));
+    refs.btnQueryVideo.onclick = async () => {
+      try {
+        setLoading(true);
+        await req("/api/test/video-query", "POST", {
+          task_id: refs.videoTaskId.value.trim(),
+        });
+        showToast("任务状态已更新");
+      } catch (err) {
+        showToast(`查询失败: ${err.message}`, true);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    refs.btnCopyResult.onclick = async () => {
+      try {
+        const text = lastResult ? JSON.stringify(lastResult, null, 2) : refs.output.textContent;
+        await navigator.clipboard.writeText(text);
+        showToast("结果已复制");
+      } catch (_) {
+        showToast("复制失败，请手动复制", true);
+      }
+    };
+
+    refs.btnClearResult.onclick = () => {
+      lastResult = null;
+      refs.output.textContent = "等待操作...";
+      refs.previewArea.className = "preview-empty";
+      refs.previewArea.textContent = "暂时没有可预览的图片/视频链接。";
+      showToast("结果已清空");
+    };
+
+    refreshState(true).catch((err) => {
+      printResult({ ok: false, error: err.message });
+      showToast(`初始化失败: ${err.message}`, true);
+    });
   </script>
 </body>
 </html>
